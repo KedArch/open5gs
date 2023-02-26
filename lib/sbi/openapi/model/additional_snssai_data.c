@@ -51,8 +51,9 @@ end:
 OpenAPI_additional_snssai_data_t *OpenAPI_additional_snssai_data_parseFromJSON(cJSON *additional_snssai_dataJSON)
 {
     OpenAPI_additional_snssai_data_t *additional_snssai_data_local_var = NULL;
-    cJSON *required_authn_authz = cJSON_GetObjectItemCaseSensitive(additional_snssai_dataJSON, "requiredAuthnAuthz");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *required_authn_authz = NULL;
+    required_authn_authz = cJSON_GetObjectItemCaseSensitive(additional_snssai_dataJSON, "requiredAuthnAuthz");
     if (required_authn_authz) {
     if (!cJSON_IsBool(required_authn_authz)) {
         ogs_error("OpenAPI_additional_snssai_data_parseFromJSON() failed [required_authn_authz]");

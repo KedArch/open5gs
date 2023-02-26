@@ -40,6 +40,7 @@ end:
 OpenAPI_usage_mon_level_t *OpenAPI_usage_mon_level_parseFromJSON(cJSON *usage_mon_levelJSON)
 {
     OpenAPI_usage_mon_level_t *usage_mon_level_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     usage_mon_level_local_var = OpenAPI_usage_mon_level_create (
     );
 

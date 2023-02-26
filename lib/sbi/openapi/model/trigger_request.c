@@ -22,7 +22,10 @@ void OpenAPI_trigger_request_free(OpenAPI_trigger_request_t *trigger_request)
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(trigger_request->supi);
+    if (trigger_request->supi) {
+        ogs_free(trigger_request->supi);
+        trigger_request->supi = NULL;
+    }
     ogs_free(trigger_request);
 }
 
@@ -36,6 +39,10 @@ cJSON *OpenAPI_trigger_request_convertToJSON(OpenAPI_trigger_request_t *trigger_
     }
 
     item = cJSON_CreateObject();
+    if (!trigger_request->supi) {
+        ogs_error("OpenAPI_trigger_request_convertToJSON() failed [supi]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "supi", trigger_request->supi) == NULL) {
         ogs_error("OpenAPI_trigger_request_convertToJSON() failed [supi]");
         goto end;
@@ -48,12 +55,13 @@ end:
 OpenAPI_trigger_request_t *OpenAPI_trigger_request_parseFromJSON(cJSON *trigger_requestJSON)
 {
     OpenAPI_trigger_request_t *trigger_request_local_var = NULL;
-    cJSON *supi = cJSON_GetObjectItemCaseSensitive(trigger_requestJSON, "supi");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *supi = NULL;
+    supi = cJSON_GetObjectItemCaseSensitive(trigger_requestJSON, "supi");
     if (!supi) {
         ogs_error("OpenAPI_trigger_request_parseFromJSON() failed [supi]");
         goto end;
     }
-
     if (!cJSON_IsString(supi)) {
         ogs_error("OpenAPI_trigger_request_parseFromJSON() failed [supi]");
         goto end;

@@ -24,8 +24,14 @@ void OpenAPI_frame_route_info_1_free(OpenAPI_frame_route_info_1_t *frame_route_i
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(frame_route_info_1->ipv4_mask);
-    ogs_free(frame_route_info_1->ipv6_prefix);
+    if (frame_route_info_1->ipv4_mask) {
+        ogs_free(frame_route_info_1->ipv4_mask);
+        frame_route_info_1->ipv4_mask = NULL;
+    }
+    if (frame_route_info_1->ipv6_prefix) {
+        ogs_free(frame_route_info_1->ipv6_prefix);
+        frame_route_info_1->ipv6_prefix = NULL;
+    }
     ogs_free(frame_route_info_1);
 }
 
@@ -60,27 +66,28 @@ end:
 OpenAPI_frame_route_info_1_t *OpenAPI_frame_route_info_1_parseFromJSON(cJSON *frame_route_info_1JSON)
 {
     OpenAPI_frame_route_info_1_t *frame_route_info_1_local_var = NULL;
-    cJSON *ipv4_mask = cJSON_GetObjectItemCaseSensitive(frame_route_info_1JSON, "ipv4Mask");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *ipv4_mask = NULL;
+    cJSON *ipv6_prefix = NULL;
+    ipv4_mask = cJSON_GetObjectItemCaseSensitive(frame_route_info_1JSON, "ipv4Mask");
     if (ipv4_mask) {
-    if (!cJSON_IsString(ipv4_mask)) {
+    if (!cJSON_IsString(ipv4_mask) && !cJSON_IsNull(ipv4_mask)) {
         ogs_error("OpenAPI_frame_route_info_1_parseFromJSON() failed [ipv4_mask]");
         goto end;
     }
     }
 
-    cJSON *ipv6_prefix = cJSON_GetObjectItemCaseSensitive(frame_route_info_1JSON, "ipv6Prefix");
-
+    ipv6_prefix = cJSON_GetObjectItemCaseSensitive(frame_route_info_1JSON, "ipv6Prefix");
     if (ipv6_prefix) {
-    if (!cJSON_IsString(ipv6_prefix)) {
+    if (!cJSON_IsString(ipv6_prefix) && !cJSON_IsNull(ipv6_prefix)) {
         ogs_error("OpenAPI_frame_route_info_1_parseFromJSON() failed [ipv6_prefix]");
         goto end;
     }
     }
 
     frame_route_info_1_local_var = OpenAPI_frame_route_info_1_create (
-        ipv4_mask ? ogs_strdup(ipv4_mask->valuestring) : NULL,
-        ipv6_prefix ? ogs_strdup(ipv6_prefix->valuestring) : NULL
+        ipv4_mask && !cJSON_IsNull(ipv4_mask) ? ogs_strdup(ipv4_mask->valuestring) : NULL,
+        ipv6_prefix && !cJSON_IsNull(ipv6_prefix) ? ogs_strdup(ipv6_prefix->valuestring) : NULL
     );
 
     return frame_route_info_1_local_var;

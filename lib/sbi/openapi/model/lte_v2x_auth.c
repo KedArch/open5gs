@@ -37,14 +37,14 @@ cJSON *OpenAPI_lte_v2x_auth_convertToJSON(OpenAPI_lte_v2x_auth_t *lte_v2x_auth)
     }
 
     item = cJSON_CreateObject();
-    if (lte_v2x_auth->vehicle_ue_auth) {
+    if (lte_v2x_auth->vehicle_ue_auth != OpenAPI_ue_auth_NULL) {
     if (cJSON_AddStringToObject(item, "vehicleUeAuth", OpenAPI_ue_auth_ToString(lte_v2x_auth->vehicle_ue_auth)) == NULL) {
         ogs_error("OpenAPI_lte_v2x_auth_convertToJSON() failed [vehicle_ue_auth]");
         goto end;
     }
     }
 
-    if (lte_v2x_auth->pedestrian_ue_auth) {
+    if (lte_v2x_auth->pedestrian_ue_auth != OpenAPI_ue_auth_NULL) {
     if (cJSON_AddStringToObject(item, "pedestrianUeAuth", OpenAPI_ue_auth_ToString(lte_v2x_auth->pedestrian_ue_auth)) == NULL) {
         ogs_error("OpenAPI_lte_v2x_auth_convertToJSON() failed [pedestrian_ue_auth]");
         goto end;
@@ -58,9 +58,12 @@ end:
 OpenAPI_lte_v2x_auth_t *OpenAPI_lte_v2x_auth_parseFromJSON(cJSON *lte_v2x_authJSON)
 {
     OpenAPI_lte_v2x_auth_t *lte_v2x_auth_local_var = NULL;
-    cJSON *vehicle_ue_auth = cJSON_GetObjectItemCaseSensitive(lte_v2x_authJSON, "vehicleUeAuth");
-
-    OpenAPI_ue_auth_e vehicle_ue_authVariable;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *vehicle_ue_auth = NULL;
+    OpenAPI_ue_auth_e vehicle_ue_authVariable = 0;
+    cJSON *pedestrian_ue_auth = NULL;
+    OpenAPI_ue_auth_e pedestrian_ue_authVariable = 0;
+    vehicle_ue_auth = cJSON_GetObjectItemCaseSensitive(lte_v2x_authJSON, "vehicleUeAuth");
     if (vehicle_ue_auth) {
     if (!cJSON_IsString(vehicle_ue_auth)) {
         ogs_error("OpenAPI_lte_v2x_auth_parseFromJSON() failed [vehicle_ue_auth]");
@@ -69,9 +72,7 @@ OpenAPI_lte_v2x_auth_t *OpenAPI_lte_v2x_auth_parseFromJSON(cJSON *lte_v2x_authJS
     vehicle_ue_authVariable = OpenAPI_ue_auth_FromString(vehicle_ue_auth->valuestring);
     }
 
-    cJSON *pedestrian_ue_auth = cJSON_GetObjectItemCaseSensitive(lte_v2x_authJSON, "pedestrianUeAuth");
-
-    OpenAPI_ue_auth_e pedestrian_ue_authVariable;
+    pedestrian_ue_auth = cJSON_GetObjectItemCaseSensitive(lte_v2x_authJSON, "pedestrianUeAuth");
     if (pedestrian_ue_auth) {
     if (!cJSON_IsString(pedestrian_ue_auth)) {
         ogs_error("OpenAPI_lte_v2x_auth_parseFromJSON() failed [pedestrian_ue_auth]");

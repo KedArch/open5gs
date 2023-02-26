@@ -24,8 +24,14 @@ void OpenAPI_app_descriptor_free(OpenAPI_app_descriptor_t *app_descriptor)
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(app_descriptor->os_id);
-    ogs_free(app_descriptor->app_id);
+    if (app_descriptor->os_id) {
+        ogs_free(app_descriptor->os_id);
+        app_descriptor->os_id = NULL;
+    }
+    if (app_descriptor->app_id) {
+        ogs_free(app_descriptor->app_id);
+        app_descriptor->app_id = NULL;
+    }
     ogs_free(app_descriptor);
 }
 
@@ -60,27 +66,28 @@ end:
 OpenAPI_app_descriptor_t *OpenAPI_app_descriptor_parseFromJSON(cJSON *app_descriptorJSON)
 {
     OpenAPI_app_descriptor_t *app_descriptor_local_var = NULL;
-    cJSON *os_id = cJSON_GetObjectItemCaseSensitive(app_descriptorJSON, "osId");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *os_id = NULL;
+    cJSON *app_id = NULL;
+    os_id = cJSON_GetObjectItemCaseSensitive(app_descriptorJSON, "osId");
     if (os_id) {
-    if (!cJSON_IsString(os_id)) {
+    if (!cJSON_IsString(os_id) && !cJSON_IsNull(os_id)) {
         ogs_error("OpenAPI_app_descriptor_parseFromJSON() failed [os_id]");
         goto end;
     }
     }
 
-    cJSON *app_id = cJSON_GetObjectItemCaseSensitive(app_descriptorJSON, "appId");
-
+    app_id = cJSON_GetObjectItemCaseSensitive(app_descriptorJSON, "appId");
     if (app_id) {
-    if (!cJSON_IsString(app_id)) {
+    if (!cJSON_IsString(app_id) && !cJSON_IsNull(app_id)) {
         ogs_error("OpenAPI_app_descriptor_parseFromJSON() failed [app_id]");
         goto end;
     }
     }
 
     app_descriptor_local_var = OpenAPI_app_descriptor_create (
-        os_id ? ogs_strdup(os_id->valuestring) : NULL,
-        app_id ? ogs_strdup(app_id->valuestring) : NULL
+        os_id && !cJSON_IsNull(os_id) ? ogs_strdup(os_id->valuestring) : NULL,
+        app_id && !cJSON_IsNull(app_id) ? ogs_strdup(app_id->valuestring) : NULL
     );
 
     return app_descriptor_local_var;

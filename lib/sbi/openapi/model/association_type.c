@@ -40,6 +40,7 @@ end:
 OpenAPI_association_type_t *OpenAPI_association_type_parseFromJSON(cJSON *association_typeJSON)
 {
     OpenAPI_association_type_t *association_type_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     association_type_local_var = OpenAPI_association_type_create (
     );
 

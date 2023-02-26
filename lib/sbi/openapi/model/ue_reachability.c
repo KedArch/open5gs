@@ -40,6 +40,7 @@ end:
 OpenAPI_ue_reachability_t *OpenAPI_ue_reachability_parseFromJSON(cJSON *ue_reachabilityJSON)
 {
     OpenAPI_ue_reachability_t *ue_reachability_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     ue_reachability_local_var = OpenAPI_ue_reachability_create (
     );
 

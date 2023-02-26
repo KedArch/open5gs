@@ -40,6 +40,7 @@ end:
 OpenAPI_supported_gad_shapes_t *OpenAPI_supported_gad_shapes_parseFromJSON(cJSON *supported_gad_shapesJSON)
 {
     OpenAPI_supported_gad_shapes_t *supported_gad_shapes_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     supported_gad_shapes_local_var = OpenAPI_supported_gad_shapes_create (
     );
 

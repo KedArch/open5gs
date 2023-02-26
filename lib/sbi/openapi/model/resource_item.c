@@ -24,11 +24,17 @@ void OpenAPI_resource_item_free(OpenAPI_resource_item_t *resource_item)
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(resource_item->mon_resource_uri);
-    OpenAPI_list_for_each(resource_item->items, node) {
-        ogs_free(node->data);
+    if (resource_item->mon_resource_uri) {
+        ogs_free(resource_item->mon_resource_uri);
+        resource_item->mon_resource_uri = NULL;
     }
-    OpenAPI_list_free(resource_item->items);
+    if (resource_item->items) {
+        OpenAPI_list_for_each(resource_item->items, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(resource_item->items);
+        resource_item->items = NULL;
+    }
     ogs_free(resource_item);
 }
 
@@ -42,11 +48,19 @@ cJSON *OpenAPI_resource_item_convertToJSON(OpenAPI_resource_item_t *resource_ite
     }
 
     item = cJSON_CreateObject();
+    if (!resource_item->mon_resource_uri) {
+        ogs_error("OpenAPI_resource_item_convertToJSON() failed [mon_resource_uri]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "monResourceUri", resource_item->mon_resource_uri) == NULL) {
         ogs_error("OpenAPI_resource_item_convertToJSON() failed [mon_resource_uri]");
         goto end;
     }
 
+    if (!resource_item->items) {
+        ogs_error("OpenAPI_resource_item_convertToJSON() failed [items]");
+        return NULL;
+    }
     cJSON *items = cJSON_AddArrayToObject(item, "items");
     if (items == NULL) {
         ogs_error("OpenAPI_resource_item_convertToJSON() failed [items]");
@@ -68,38 +82,39 @@ end:
 OpenAPI_resource_item_t *OpenAPI_resource_item_parseFromJSON(cJSON *resource_itemJSON)
 {
     OpenAPI_resource_item_t *resource_item_local_var = NULL;
-    cJSON *mon_resource_uri = cJSON_GetObjectItemCaseSensitive(resource_itemJSON, "monResourceUri");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *mon_resource_uri = NULL;
+    cJSON *items = NULL;
+    OpenAPI_list_t *itemsList = NULL;
+    mon_resource_uri = cJSON_GetObjectItemCaseSensitive(resource_itemJSON, "monResourceUri");
     if (!mon_resource_uri) {
         ogs_error("OpenAPI_resource_item_parseFromJSON() failed [mon_resource_uri]");
         goto end;
     }
-
     if (!cJSON_IsString(mon_resource_uri)) {
         ogs_error("OpenAPI_resource_item_parseFromJSON() failed [mon_resource_uri]");
         goto end;
     }
 
-    cJSON *items = cJSON_GetObjectItemCaseSensitive(resource_itemJSON, "items");
+    items = cJSON_GetObjectItemCaseSensitive(resource_itemJSON, "items");
     if (!items) {
         ogs_error("OpenAPI_resource_item_parseFromJSON() failed [items]");
         goto end;
     }
+        cJSON *items_local;
+        if (!cJSON_IsArray(items)) {
+            ogs_error("OpenAPI_resource_item_parseFromJSON() failed [items]");
+            goto end;
+        }
+        itemsList = OpenAPI_list_create();
 
-    OpenAPI_list_t *itemsList;
-    cJSON *items_local;
-    if (!cJSON_IsArray(items)) {
-        ogs_error("OpenAPI_resource_item_parseFromJSON() failed [items]");
-        goto end;
-    }
-    itemsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(items_local, items) {
-    if (!cJSON_IsString(items_local)) {
-        ogs_error("OpenAPI_resource_item_parseFromJSON() failed [items]");
-        goto end;
-    }
-    OpenAPI_list_add(itemsList, ogs_strdup(items_local->valuestring));
-    }
+        cJSON_ArrayForEach(items_local, items) {
+        if (!cJSON_IsString(items_local)) {
+            ogs_error("OpenAPI_resource_item_parseFromJSON() failed [items]");
+            goto end;
+        }
+        OpenAPI_list_add(itemsList, ogs_strdup(items_local->valuestring));
+        }
 
     resource_item_local_var = OpenAPI_resource_item_create (
         ogs_strdup(mon_resource_uri->valuestring),
@@ -108,6 +123,13 @@ OpenAPI_resource_item_t *OpenAPI_resource_item_parseFromJSON(cJSON *resource_ite
 
     return resource_item_local_var;
 end:
+    if (itemsList) {
+        OpenAPI_list_for_each(itemsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(itemsList);
+        itemsList = NULL;
+    }
     return NULL;
 }
 

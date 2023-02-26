@@ -40,6 +40,7 @@ end:
 OpenAPI_location_accuracy_t *OpenAPI_location_accuracy_parseFromJSON(cJSON *location_accuracyJSON)
 {
     OpenAPI_location_accuracy_t *location_accuracy_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     location_accuracy_local_var = OpenAPI_location_accuracy_create (
     );
 

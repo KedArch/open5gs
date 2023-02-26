@@ -40,6 +40,7 @@ end:
 OpenAPI_rm_state_t *OpenAPI_rm_state_parseFromJSON(cJSON *rm_stateJSON)
 {
     OpenAPI_rm_state_t *rm_state_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     rm_state_local_var = OpenAPI_rm_state_create (
     );
 

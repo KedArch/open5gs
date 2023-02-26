@@ -40,24 +40,42 @@ void OpenAPI_slice_info_for_registration_free(OpenAPI_slice_info_for_registratio
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(slice_info_for_registration->subscribed_nssai, node) {
-        OpenAPI_subscribed_snssai_free(node->data);
+    if (slice_info_for_registration->subscribed_nssai) {
+        OpenAPI_list_for_each(slice_info_for_registration->subscribed_nssai, node) {
+            OpenAPI_subscribed_snssai_free(node->data);
+        }
+        OpenAPI_list_free(slice_info_for_registration->subscribed_nssai);
+        slice_info_for_registration->subscribed_nssai = NULL;
     }
-    OpenAPI_list_free(slice_info_for_registration->subscribed_nssai);
-    OpenAPI_allowed_nssai_free(slice_info_for_registration->allowed_nssai_current_access);
-    OpenAPI_allowed_nssai_free(slice_info_for_registration->allowed_nssai_other_access);
-    OpenAPI_list_for_each(slice_info_for_registration->s_nssai_for_mapping, node) {
-        OpenAPI_snssai_free(node->data);
+    if (slice_info_for_registration->allowed_nssai_current_access) {
+        OpenAPI_allowed_nssai_free(slice_info_for_registration->allowed_nssai_current_access);
+        slice_info_for_registration->allowed_nssai_current_access = NULL;
     }
-    OpenAPI_list_free(slice_info_for_registration->s_nssai_for_mapping);
-    OpenAPI_list_for_each(slice_info_for_registration->requested_nssai, node) {
-        OpenAPI_snssai_free(node->data);
+    if (slice_info_for_registration->allowed_nssai_other_access) {
+        OpenAPI_allowed_nssai_free(slice_info_for_registration->allowed_nssai_other_access);
+        slice_info_for_registration->allowed_nssai_other_access = NULL;
     }
-    OpenAPI_list_free(slice_info_for_registration->requested_nssai);
-    OpenAPI_list_for_each(slice_info_for_registration->mapping_of_nssai, node) {
-        OpenAPI_mapping_of_snssai_free(node->data);
+    if (slice_info_for_registration->s_nssai_for_mapping) {
+        OpenAPI_list_for_each(slice_info_for_registration->s_nssai_for_mapping, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(slice_info_for_registration->s_nssai_for_mapping);
+        slice_info_for_registration->s_nssai_for_mapping = NULL;
     }
-    OpenAPI_list_free(slice_info_for_registration->mapping_of_nssai);
+    if (slice_info_for_registration->requested_nssai) {
+        OpenAPI_list_for_each(slice_info_for_registration->requested_nssai, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(slice_info_for_registration->requested_nssai);
+        slice_info_for_registration->requested_nssai = NULL;
+    }
+    if (slice_info_for_registration->mapping_of_nssai) {
+        OpenAPI_list_for_each(slice_info_for_registration->mapping_of_nssai, node) {
+            OpenAPI_mapping_of_snssai_free(node->data);
+        }
+        OpenAPI_list_free(slice_info_for_registration->mapping_of_nssai);
+        slice_info_for_registration->mapping_of_nssai = NULL;
+    }
     ogs_free(slice_info_for_registration);
 }
 
@@ -198,109 +216,113 @@ end:
 OpenAPI_slice_info_for_registration_t *OpenAPI_slice_info_for_registration_parseFromJSON(cJSON *slice_info_for_registrationJSON)
 {
     OpenAPI_slice_info_for_registration_t *slice_info_for_registration_local_var = NULL;
-    cJSON *subscribed_nssai = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "subscribedNssai");
-
-    OpenAPI_list_t *subscribed_nssaiList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *subscribed_nssai = NULL;
+    OpenAPI_list_t *subscribed_nssaiList = NULL;
+    cJSON *allowed_nssai_current_access = NULL;
+    OpenAPI_allowed_nssai_t *allowed_nssai_current_access_local_nonprim = NULL;
+    cJSON *allowed_nssai_other_access = NULL;
+    OpenAPI_allowed_nssai_t *allowed_nssai_other_access_local_nonprim = NULL;
+    cJSON *s_nssai_for_mapping = NULL;
+    OpenAPI_list_t *s_nssai_for_mappingList = NULL;
+    cJSON *requested_nssai = NULL;
+    OpenAPI_list_t *requested_nssaiList = NULL;
+    cJSON *default_configured_snssai_ind = NULL;
+    cJSON *mapping_of_nssai = NULL;
+    OpenAPI_list_t *mapping_of_nssaiList = NULL;
+    cJSON *request_mapping = NULL;
+    subscribed_nssai = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "subscribedNssai");
     if (subscribed_nssai) {
-    cJSON *subscribed_nssai_local_nonprimitive;
-    if (!cJSON_IsArray(subscribed_nssai)){
-        ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [subscribed_nssai]");
-        goto end;
-    }
-
-    subscribed_nssaiList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(subscribed_nssai_local_nonprimitive, subscribed_nssai ) {
-        if (!cJSON_IsObject(subscribed_nssai_local_nonprimitive)) {
+        cJSON *subscribed_nssai_local_nonprimitive;
+        if (!cJSON_IsArray(subscribed_nssai)){
             ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [subscribed_nssai]");
             goto end;
         }
-        OpenAPI_subscribed_snssai_t *subscribed_nssaiItem = OpenAPI_subscribed_snssai_parseFromJSON(subscribed_nssai_local_nonprimitive);
 
-        if (!subscribed_nssaiItem) {
-            ogs_error("No subscribed_nssaiItem");
-            OpenAPI_list_free(subscribed_nssaiList);
-            goto end;
+        subscribed_nssaiList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(subscribed_nssai_local_nonprimitive, subscribed_nssai ) {
+            if (!cJSON_IsObject(subscribed_nssai_local_nonprimitive)) {
+                ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [subscribed_nssai]");
+                goto end;
+            }
+            OpenAPI_subscribed_snssai_t *subscribed_nssaiItem = OpenAPI_subscribed_snssai_parseFromJSON(subscribed_nssai_local_nonprimitive);
+
+            if (!subscribed_nssaiItem) {
+                ogs_error("No subscribed_nssaiItem");
+                OpenAPI_list_free(subscribed_nssaiList);
+                goto end;
+            }
+
+            OpenAPI_list_add(subscribed_nssaiList, subscribed_nssaiItem);
         }
-
-        OpenAPI_list_add(subscribed_nssaiList, subscribed_nssaiItem);
-    }
     }
 
-    cJSON *allowed_nssai_current_access = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "allowedNssaiCurrentAccess");
-
-    OpenAPI_allowed_nssai_t *allowed_nssai_current_access_local_nonprim = NULL;
+    allowed_nssai_current_access = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "allowedNssaiCurrentAccess");
     if (allowed_nssai_current_access) {
     allowed_nssai_current_access_local_nonprim = OpenAPI_allowed_nssai_parseFromJSON(allowed_nssai_current_access);
     }
 
-    cJSON *allowed_nssai_other_access = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "allowedNssaiOtherAccess");
-
-    OpenAPI_allowed_nssai_t *allowed_nssai_other_access_local_nonprim = NULL;
+    allowed_nssai_other_access = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "allowedNssaiOtherAccess");
     if (allowed_nssai_other_access) {
     allowed_nssai_other_access_local_nonprim = OpenAPI_allowed_nssai_parseFromJSON(allowed_nssai_other_access);
     }
 
-    cJSON *s_nssai_for_mapping = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "sNssaiForMapping");
-
-    OpenAPI_list_t *s_nssai_for_mappingList;
+    s_nssai_for_mapping = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "sNssaiForMapping");
     if (s_nssai_for_mapping) {
-    cJSON *s_nssai_for_mapping_local_nonprimitive;
-    if (!cJSON_IsArray(s_nssai_for_mapping)){
-        ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [s_nssai_for_mapping]");
-        goto end;
-    }
-
-    s_nssai_for_mappingList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(s_nssai_for_mapping_local_nonprimitive, s_nssai_for_mapping ) {
-        if (!cJSON_IsObject(s_nssai_for_mapping_local_nonprimitive)) {
+        cJSON *s_nssai_for_mapping_local_nonprimitive;
+        if (!cJSON_IsArray(s_nssai_for_mapping)){
             ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [s_nssai_for_mapping]");
             goto end;
         }
-        OpenAPI_snssai_t *s_nssai_for_mappingItem = OpenAPI_snssai_parseFromJSON(s_nssai_for_mapping_local_nonprimitive);
 
-        if (!s_nssai_for_mappingItem) {
-            ogs_error("No s_nssai_for_mappingItem");
-            OpenAPI_list_free(s_nssai_for_mappingList);
-            goto end;
+        s_nssai_for_mappingList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(s_nssai_for_mapping_local_nonprimitive, s_nssai_for_mapping ) {
+            if (!cJSON_IsObject(s_nssai_for_mapping_local_nonprimitive)) {
+                ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [s_nssai_for_mapping]");
+                goto end;
+            }
+            OpenAPI_snssai_t *s_nssai_for_mappingItem = OpenAPI_snssai_parseFromJSON(s_nssai_for_mapping_local_nonprimitive);
+
+            if (!s_nssai_for_mappingItem) {
+                ogs_error("No s_nssai_for_mappingItem");
+                OpenAPI_list_free(s_nssai_for_mappingList);
+                goto end;
+            }
+
+            OpenAPI_list_add(s_nssai_for_mappingList, s_nssai_for_mappingItem);
         }
-
-        OpenAPI_list_add(s_nssai_for_mappingList, s_nssai_for_mappingItem);
-    }
     }
 
-    cJSON *requested_nssai = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "requestedNssai");
-
-    OpenAPI_list_t *requested_nssaiList;
+    requested_nssai = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "requestedNssai");
     if (requested_nssai) {
-    cJSON *requested_nssai_local_nonprimitive;
-    if (!cJSON_IsArray(requested_nssai)){
-        ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [requested_nssai]");
-        goto end;
-    }
-
-    requested_nssaiList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(requested_nssai_local_nonprimitive, requested_nssai ) {
-        if (!cJSON_IsObject(requested_nssai_local_nonprimitive)) {
+        cJSON *requested_nssai_local_nonprimitive;
+        if (!cJSON_IsArray(requested_nssai)){
             ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [requested_nssai]");
             goto end;
         }
-        OpenAPI_snssai_t *requested_nssaiItem = OpenAPI_snssai_parseFromJSON(requested_nssai_local_nonprimitive);
 
-        if (!requested_nssaiItem) {
-            ogs_error("No requested_nssaiItem");
-            OpenAPI_list_free(requested_nssaiList);
-            goto end;
+        requested_nssaiList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(requested_nssai_local_nonprimitive, requested_nssai ) {
+            if (!cJSON_IsObject(requested_nssai_local_nonprimitive)) {
+                ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [requested_nssai]");
+                goto end;
+            }
+            OpenAPI_snssai_t *requested_nssaiItem = OpenAPI_snssai_parseFromJSON(requested_nssai_local_nonprimitive);
+
+            if (!requested_nssaiItem) {
+                ogs_error("No requested_nssaiItem");
+                OpenAPI_list_free(requested_nssaiList);
+                goto end;
+            }
+
+            OpenAPI_list_add(requested_nssaiList, requested_nssaiItem);
         }
-
-        OpenAPI_list_add(requested_nssaiList, requested_nssaiItem);
-    }
     }
 
-    cJSON *default_configured_snssai_ind = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "defaultConfiguredSnssaiInd");
-
+    default_configured_snssai_ind = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "defaultConfiguredSnssaiInd");
     if (default_configured_snssai_ind) {
     if (!cJSON_IsBool(default_configured_snssai_ind)) {
         ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [default_configured_snssai_ind]");
@@ -308,37 +330,34 @@ OpenAPI_slice_info_for_registration_t *OpenAPI_slice_info_for_registration_parse
     }
     }
 
-    cJSON *mapping_of_nssai = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "mappingOfNssai");
-
-    OpenAPI_list_t *mapping_of_nssaiList;
+    mapping_of_nssai = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "mappingOfNssai");
     if (mapping_of_nssai) {
-    cJSON *mapping_of_nssai_local_nonprimitive;
-    if (!cJSON_IsArray(mapping_of_nssai)){
-        ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [mapping_of_nssai]");
-        goto end;
-    }
-
-    mapping_of_nssaiList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(mapping_of_nssai_local_nonprimitive, mapping_of_nssai ) {
-        if (!cJSON_IsObject(mapping_of_nssai_local_nonprimitive)) {
+        cJSON *mapping_of_nssai_local_nonprimitive;
+        if (!cJSON_IsArray(mapping_of_nssai)){
             ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [mapping_of_nssai]");
             goto end;
         }
-        OpenAPI_mapping_of_snssai_t *mapping_of_nssaiItem = OpenAPI_mapping_of_snssai_parseFromJSON(mapping_of_nssai_local_nonprimitive);
 
-        if (!mapping_of_nssaiItem) {
-            ogs_error("No mapping_of_nssaiItem");
-            OpenAPI_list_free(mapping_of_nssaiList);
-            goto end;
+        mapping_of_nssaiList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(mapping_of_nssai_local_nonprimitive, mapping_of_nssai ) {
+            if (!cJSON_IsObject(mapping_of_nssai_local_nonprimitive)) {
+                ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [mapping_of_nssai]");
+                goto end;
+            }
+            OpenAPI_mapping_of_snssai_t *mapping_of_nssaiItem = OpenAPI_mapping_of_snssai_parseFromJSON(mapping_of_nssai_local_nonprimitive);
+
+            if (!mapping_of_nssaiItem) {
+                ogs_error("No mapping_of_nssaiItem");
+                OpenAPI_list_free(mapping_of_nssaiList);
+                goto end;
+            }
+
+            OpenAPI_list_add(mapping_of_nssaiList, mapping_of_nssaiItem);
         }
-
-        OpenAPI_list_add(mapping_of_nssaiList, mapping_of_nssaiItem);
-    }
     }
 
-    cJSON *request_mapping = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "requestMapping");
-
+    request_mapping = cJSON_GetObjectItemCaseSensitive(slice_info_for_registrationJSON, "requestMapping");
     if (request_mapping) {
     if (!cJSON_IsBool(request_mapping)) {
         ogs_error("OpenAPI_slice_info_for_registration_parseFromJSON() failed [request_mapping]");
@@ -361,6 +380,42 @@ OpenAPI_slice_info_for_registration_t *OpenAPI_slice_info_for_registration_parse
 
     return slice_info_for_registration_local_var;
 end:
+    if (subscribed_nssaiList) {
+        OpenAPI_list_for_each(subscribed_nssaiList, node) {
+            OpenAPI_subscribed_snssai_free(node->data);
+        }
+        OpenAPI_list_free(subscribed_nssaiList);
+        subscribed_nssaiList = NULL;
+    }
+    if (allowed_nssai_current_access_local_nonprim) {
+        OpenAPI_allowed_nssai_free(allowed_nssai_current_access_local_nonprim);
+        allowed_nssai_current_access_local_nonprim = NULL;
+    }
+    if (allowed_nssai_other_access_local_nonprim) {
+        OpenAPI_allowed_nssai_free(allowed_nssai_other_access_local_nonprim);
+        allowed_nssai_other_access_local_nonprim = NULL;
+    }
+    if (s_nssai_for_mappingList) {
+        OpenAPI_list_for_each(s_nssai_for_mappingList, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(s_nssai_for_mappingList);
+        s_nssai_for_mappingList = NULL;
+    }
+    if (requested_nssaiList) {
+        OpenAPI_list_for_each(requested_nssaiList, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(requested_nssaiList);
+        requested_nssaiList = NULL;
+    }
+    if (mapping_of_nssaiList) {
+        OpenAPI_list_for_each(mapping_of_nssaiList, node) {
+            OpenAPI_mapping_of_snssai_free(node->data);
+        }
+        OpenAPI_list_free(mapping_of_nssaiList);
+        mapping_of_nssaiList = NULL;
+    }
     return NULL;
 }
 

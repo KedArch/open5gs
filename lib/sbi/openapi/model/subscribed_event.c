@@ -40,6 +40,7 @@ end:
 OpenAPI_subscribed_event_t *OpenAPI_subscribed_event_parseFromJSON(cJSON *subscribed_eventJSON)
 {
     OpenAPI_subscribed_event_t *subscribed_event_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     subscribed_event_local_var = OpenAPI_subscribed_event_create (
     );
 

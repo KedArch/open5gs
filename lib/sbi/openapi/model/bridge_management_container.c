@@ -5,7 +5,7 @@
 #include "bridge_management_container.h"
 
 OpenAPI_bridge_management_container_t *OpenAPI_bridge_management_container_create(
-    char bridge_man_cont
+    char *bridge_man_cont
 )
 {
     OpenAPI_bridge_management_container_t *bridge_management_container_local_var = ogs_malloc(sizeof(OpenAPI_bridge_management_container_t));
@@ -22,6 +22,10 @@ void OpenAPI_bridge_management_container_free(OpenAPI_bridge_management_containe
         return;
     }
     OpenAPI_lnode_t *node;
+    if (bridge_management_container->bridge_man_cont) {
+        ogs_free(bridge_management_container->bridge_man_cont);
+        bridge_management_container->bridge_man_cont = NULL;
+    }
     ogs_free(bridge_management_container);
 }
 
@@ -35,7 +39,11 @@ cJSON *OpenAPI_bridge_management_container_convertToJSON(OpenAPI_bridge_manageme
     }
 
     item = cJSON_CreateObject();
-    if (cJSON_AddNumberToObject(item, "bridgeManCont", bridge_management_container->bridge_man_cont) == NULL) {
+    if (!bridge_management_container->bridge_man_cont) {
+        ogs_error("OpenAPI_bridge_management_container_convertToJSON() failed [bridge_man_cont]");
+        return NULL;
+    }
+    if (cJSON_AddStringToObject(item, "bridgeManCont", bridge_management_container->bridge_man_cont) == NULL) {
         ogs_error("OpenAPI_bridge_management_container_convertToJSON() failed [bridge_man_cont]");
         goto end;
     }
@@ -47,19 +55,20 @@ end:
 OpenAPI_bridge_management_container_t *OpenAPI_bridge_management_container_parseFromJSON(cJSON *bridge_management_containerJSON)
 {
     OpenAPI_bridge_management_container_t *bridge_management_container_local_var = NULL;
-    cJSON *bridge_man_cont = cJSON_GetObjectItemCaseSensitive(bridge_management_containerJSON, "bridgeManCont");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *bridge_man_cont = NULL;
+    bridge_man_cont = cJSON_GetObjectItemCaseSensitive(bridge_management_containerJSON, "bridgeManCont");
     if (!bridge_man_cont) {
         ogs_error("OpenAPI_bridge_management_container_parseFromJSON() failed [bridge_man_cont]");
         goto end;
     }
-
-    if (!cJSON_IsNumber(bridge_man_cont)) {
+    if (!cJSON_IsString(bridge_man_cont)) {
         ogs_error("OpenAPI_bridge_management_container_parseFromJSON() failed [bridge_man_cont]");
         goto end;
     }
 
     bridge_management_container_local_var = OpenAPI_bridge_management_container_create (
-        bridge_man_cont->valueint
+        ogs_strdup(bridge_man_cont->valuestring)
     );
 
     return bridge_management_container_local_var;

@@ -40,6 +40,7 @@ end:
 OpenAPI_nwdaf_event_t *OpenAPI_nwdaf_event_parseFromJSON(cJSON *nwdaf_eventJSON)
 {
     OpenAPI_nwdaf_event_t *nwdaf_event_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     nwdaf_event_local_var = OpenAPI_nwdaf_event_create (
     );
 

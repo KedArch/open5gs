@@ -40,6 +40,7 @@ end:
 OpenAPI_domain_name_protocol_t *OpenAPI_domain_name_protocol_parseFromJSON(cJSON *domain_name_protocolJSON)
 {
     OpenAPI_domain_name_protocol_t *domain_name_protocol_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     domain_name_protocol_local_var = OpenAPI_domain_name_protocol_create (
     );
 

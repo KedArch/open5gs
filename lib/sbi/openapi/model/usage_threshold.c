@@ -84,8 +84,12 @@ end:
 OpenAPI_usage_threshold_t *OpenAPI_usage_threshold_parseFromJSON(cJSON *usage_thresholdJSON)
 {
     OpenAPI_usage_threshold_t *usage_threshold_local_var = NULL;
-    cJSON *duration = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "duration");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *duration = NULL;
+    cJSON *total_volume = NULL;
+    cJSON *downlink_volume = NULL;
+    cJSON *uplink_volume = NULL;
+    duration = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "duration");
     if (duration) {
     if (!cJSON_IsNumber(duration)) {
         ogs_error("OpenAPI_usage_threshold_parseFromJSON() failed [duration]");
@@ -93,8 +97,7 @@ OpenAPI_usage_threshold_t *OpenAPI_usage_threshold_parseFromJSON(cJSON *usage_th
     }
     }
 
-    cJSON *total_volume = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "totalVolume");
-
+    total_volume = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "totalVolume");
     if (total_volume) {
     if (!cJSON_IsNumber(total_volume)) {
         ogs_error("OpenAPI_usage_threshold_parseFromJSON() failed [total_volume]");
@@ -102,8 +105,7 @@ OpenAPI_usage_threshold_t *OpenAPI_usage_threshold_parseFromJSON(cJSON *usage_th
     }
     }
 
-    cJSON *downlink_volume = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "downlinkVolume");
-
+    downlink_volume = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "downlinkVolume");
     if (downlink_volume) {
     if (!cJSON_IsNumber(downlink_volume)) {
         ogs_error("OpenAPI_usage_threshold_parseFromJSON() failed [downlink_volume]");
@@ -111,8 +113,7 @@ OpenAPI_usage_threshold_t *OpenAPI_usage_threshold_parseFromJSON(cJSON *usage_th
     }
     }
 
-    cJSON *uplink_volume = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "uplinkVolume");
-
+    uplink_volume = cJSON_GetObjectItemCaseSensitive(usage_thresholdJSON, "uplinkVolume");
     if (uplink_volume) {
     if (!cJSON_IsNumber(uplink_volume)) {
         ogs_error("OpenAPI_usage_threshold_parseFromJSON() failed [uplink_volume]");

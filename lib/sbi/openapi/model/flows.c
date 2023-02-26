@@ -26,14 +26,20 @@ void OpenAPI_flows_free(OpenAPI_flows_t *flows)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(flows->cont_vers, node) {
-        ogs_free(node->data);
+    if (flows->cont_vers) {
+        OpenAPI_list_for_each(flows->cont_vers, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(flows->cont_vers);
+        flows->cont_vers = NULL;
     }
-    OpenAPI_list_free(flows->cont_vers);
-    OpenAPI_list_for_each(flows->f_nums, node) {
-        ogs_free(node->data);
+    if (flows->f_nums) {
+        OpenAPI_list_for_each(flows->f_nums, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(flows->f_nums);
+        flows->f_nums = NULL;
     }
-    OpenAPI_list_free(flows->f_nums);
     ogs_free(flows);
 }
 
@@ -91,52 +97,65 @@ end:
 OpenAPI_flows_t *OpenAPI_flows_parseFromJSON(cJSON *flowsJSON)
 {
     OpenAPI_flows_t *flows_local_var = NULL;
-    cJSON *cont_vers = cJSON_GetObjectItemCaseSensitive(flowsJSON, "contVers");
-
-    OpenAPI_list_t *cont_versList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *cont_vers = NULL;
+    OpenAPI_list_t *cont_versList = NULL;
+    cJSON *f_nums = NULL;
+    OpenAPI_list_t *f_numsList = NULL;
+    cJSON *med_comp_n = NULL;
+    cont_vers = cJSON_GetObjectItemCaseSensitive(flowsJSON, "contVers");
     if (cont_vers) {
-    cJSON *cont_vers_local;
-    if (!cJSON_IsArray(cont_vers)) {
-        ogs_error("OpenAPI_flows_parseFromJSON() failed [cont_vers]");
-        goto end;
-    }
-    cont_versList = OpenAPI_list_create();
+        cJSON *cont_vers_local;
+        if (!cJSON_IsArray(cont_vers)) {
+            ogs_error("OpenAPI_flows_parseFromJSON() failed [cont_vers]");
+            goto end;
+        }
+        cont_versList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(cont_vers_local, cont_vers) {
-    if (!cJSON_IsNumber(cont_vers_local)) {
-        ogs_error("OpenAPI_flows_parseFromJSON() failed [cont_vers]");
-        goto end;
-    }
-    OpenAPI_list_add(cont_versList, &cont_vers_local->valuedouble);
-    }
+        cJSON_ArrayForEach(cont_vers_local, cont_vers) {
+        if (!cJSON_IsNumber(cont_vers_local)) {
+            ogs_error("OpenAPI_flows_parseFromJSON() failed [cont_vers]");
+            goto end;
+        }
+        double *cont_vers_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!cont_vers_local_value) {
+            ogs_error("OpenAPI_flows_parseFromJSON() failed [cont_vers]");
+            goto end;
+        }
+        *cont_vers_local_value = cont_vers_local->valuedouble;
+        OpenAPI_list_add(cont_versList, cont_vers_local_value);
+        }
     }
 
-    cJSON *f_nums = cJSON_GetObjectItemCaseSensitive(flowsJSON, "fNums");
-
-    OpenAPI_list_t *f_numsList;
+    f_nums = cJSON_GetObjectItemCaseSensitive(flowsJSON, "fNums");
     if (f_nums) {
-    cJSON *f_nums_local;
-    if (!cJSON_IsArray(f_nums)) {
-        ogs_error("OpenAPI_flows_parseFromJSON() failed [f_nums]");
-        goto end;
-    }
-    f_numsList = OpenAPI_list_create();
+        cJSON *f_nums_local;
+        if (!cJSON_IsArray(f_nums)) {
+            ogs_error("OpenAPI_flows_parseFromJSON() failed [f_nums]");
+            goto end;
+        }
+        f_numsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(f_nums_local, f_nums) {
-    if (!cJSON_IsNumber(f_nums_local)) {
-        ogs_error("OpenAPI_flows_parseFromJSON() failed [f_nums]");
-        goto end;
-    }
-    OpenAPI_list_add(f_numsList, &f_nums_local->valuedouble);
-    }
+        cJSON_ArrayForEach(f_nums_local, f_nums) {
+        if (!cJSON_IsNumber(f_nums_local)) {
+            ogs_error("OpenAPI_flows_parseFromJSON() failed [f_nums]");
+            goto end;
+        }
+        double *f_nums_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!f_nums_local_value) {
+            ogs_error("OpenAPI_flows_parseFromJSON() failed [f_nums]");
+            goto end;
+        }
+        *f_nums_local_value = f_nums_local->valuedouble;
+        OpenAPI_list_add(f_numsList, f_nums_local_value);
+        }
     }
 
-    cJSON *med_comp_n = cJSON_GetObjectItemCaseSensitive(flowsJSON, "medCompN");
+    med_comp_n = cJSON_GetObjectItemCaseSensitive(flowsJSON, "medCompN");
     if (!med_comp_n) {
         ogs_error("OpenAPI_flows_parseFromJSON() failed [med_comp_n]");
         goto end;
     }
-
     if (!cJSON_IsNumber(med_comp_n)) {
         ogs_error("OpenAPI_flows_parseFromJSON() failed [med_comp_n]");
         goto end;
@@ -151,6 +170,20 @@ OpenAPI_flows_t *OpenAPI_flows_parseFromJSON(cJSON *flowsJSON)
 
     return flows_local_var;
 end:
+    if (cont_versList) {
+        OpenAPI_list_for_each(cont_versList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(cont_versList);
+        cont_versList = NULL;
+    }
+    if (f_numsList) {
+        OpenAPI_list_for_each(f_numsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(f_numsList);
+        f_numsList = NULL;
+    }
     return NULL;
 }
 

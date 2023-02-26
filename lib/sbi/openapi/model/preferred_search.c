@@ -106,8 +106,14 @@ end:
 OpenAPI_preferred_search_t *OpenAPI_preferred_search_parseFromJSON(cJSON *preferred_searchJSON)
 {
     OpenAPI_preferred_search_t *preferred_search_local_var = NULL;
-    cJSON *preferred_tai_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredTaiMatchInd");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *preferred_tai_match_ind = NULL;
+    cJSON *preferred_full_plmn_match_ind = NULL;
+    cJSON *preferred_api_versions_match_ind = NULL;
+    cJSON *other_api_versions_ind = NULL;
+    cJSON *preferred_locality_match_ind = NULL;
+    cJSON *other_locality_ind = NULL;
+    preferred_tai_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredTaiMatchInd");
     if (preferred_tai_match_ind) {
     if (!cJSON_IsBool(preferred_tai_match_ind)) {
         ogs_error("OpenAPI_preferred_search_parseFromJSON() failed [preferred_tai_match_ind]");
@@ -115,8 +121,7 @@ OpenAPI_preferred_search_t *OpenAPI_preferred_search_parseFromJSON(cJSON *prefer
     }
     }
 
-    cJSON *preferred_full_plmn_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredFullPlmnMatchInd");
-
+    preferred_full_plmn_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredFullPlmnMatchInd");
     if (preferred_full_plmn_match_ind) {
     if (!cJSON_IsBool(preferred_full_plmn_match_ind)) {
         ogs_error("OpenAPI_preferred_search_parseFromJSON() failed [preferred_full_plmn_match_ind]");
@@ -124,8 +129,7 @@ OpenAPI_preferred_search_t *OpenAPI_preferred_search_parseFromJSON(cJSON *prefer
     }
     }
 
-    cJSON *preferred_api_versions_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredApiVersionsMatchInd");
-
+    preferred_api_versions_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredApiVersionsMatchInd");
     if (preferred_api_versions_match_ind) {
     if (!cJSON_IsBool(preferred_api_versions_match_ind)) {
         ogs_error("OpenAPI_preferred_search_parseFromJSON() failed [preferred_api_versions_match_ind]");
@@ -133,8 +137,7 @@ OpenAPI_preferred_search_t *OpenAPI_preferred_search_parseFromJSON(cJSON *prefer
     }
     }
 
-    cJSON *other_api_versions_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "otherApiVersionsInd");
-
+    other_api_versions_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "otherApiVersionsInd");
     if (other_api_versions_ind) {
     if (!cJSON_IsBool(other_api_versions_ind)) {
         ogs_error("OpenAPI_preferred_search_parseFromJSON() failed [other_api_versions_ind]");
@@ -142,8 +145,7 @@ OpenAPI_preferred_search_t *OpenAPI_preferred_search_parseFromJSON(cJSON *prefer
     }
     }
 
-    cJSON *preferred_locality_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredLocalityMatchInd");
-
+    preferred_locality_match_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "preferredLocalityMatchInd");
     if (preferred_locality_match_ind) {
     if (!cJSON_IsBool(preferred_locality_match_ind)) {
         ogs_error("OpenAPI_preferred_search_parseFromJSON() failed [preferred_locality_match_ind]");
@@ -151,8 +153,7 @@ OpenAPI_preferred_search_t *OpenAPI_preferred_search_parseFromJSON(cJSON *prefer
     }
     }
 
-    cJSON *other_locality_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "otherLocalityInd");
-
+    other_locality_ind = cJSON_GetObjectItemCaseSensitive(preferred_searchJSON, "otherLocalityInd");
     if (other_locality_ind) {
     if (!cJSON_IsBool(other_locality_ind)) {
         ogs_error("OpenAPI_preferred_search_parseFromJSON() failed [other_locality_ind]");

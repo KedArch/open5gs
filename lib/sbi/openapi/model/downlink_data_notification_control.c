@@ -24,8 +24,14 @@ void OpenAPI_downlink_data_notification_control_free(OpenAPI_downlink_data_notif
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_free(downlink_data_notification_control->notif_ctrl_inds);
-    OpenAPI_list_free(downlink_data_notification_control->types_of_notif);
+    if (downlink_data_notification_control->notif_ctrl_inds) {
+        OpenAPI_list_free(downlink_data_notification_control->notif_ctrl_inds);
+        downlink_data_notification_control->notif_ctrl_inds = NULL;
+    }
+    if (downlink_data_notification_control->types_of_notif) {
+        OpenAPI_list_free(downlink_data_notification_control->types_of_notif);
+        downlink_data_notification_control->types_of_notif = NULL;
+    }
     ogs_free(downlink_data_notification_control);
 }
 
@@ -39,7 +45,7 @@ cJSON *OpenAPI_downlink_data_notification_control_convertToJSON(OpenAPI_downlink
     }
 
     item = cJSON_CreateObject();
-    if (downlink_data_notification_control->notif_ctrl_inds) {
+    if (downlink_data_notification_control->notif_ctrl_inds != OpenAPI_notification_control_indication_NULL) {
     cJSON *notif_ctrl_inds = cJSON_AddArrayToObject(item, "notifCtrlInds");
     if (notif_ctrl_inds == NULL) {
         ogs_error("OpenAPI_downlink_data_notification_control_convertToJSON() failed [notif_ctrl_inds]");
@@ -54,7 +60,7 @@ cJSON *OpenAPI_downlink_data_notification_control_convertToJSON(OpenAPI_downlink
     }
     }
 
-    if (downlink_data_notification_control->types_of_notif) {
+    if (downlink_data_notification_control->types_of_notif != OpenAPI_dl_data_delivery_status_NULL) {
     cJSON *types_of_notif = cJSON_AddArrayToObject(item, "typesOfNotif");
     if (types_of_notif == NULL) {
         ogs_error("OpenAPI_downlink_data_notification_control_convertToJSON() failed [types_of_notif]");
@@ -76,48 +82,49 @@ end:
 OpenAPI_downlink_data_notification_control_t *OpenAPI_downlink_data_notification_control_parseFromJSON(cJSON *downlink_data_notification_controlJSON)
 {
     OpenAPI_downlink_data_notification_control_t *downlink_data_notification_control_local_var = NULL;
-    cJSON *notif_ctrl_inds = cJSON_GetObjectItemCaseSensitive(downlink_data_notification_controlJSON, "notifCtrlInds");
-
-    OpenAPI_list_t *notif_ctrl_indsList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *notif_ctrl_inds = NULL;
+    OpenAPI_list_t *notif_ctrl_indsList = NULL;
+    cJSON *types_of_notif = NULL;
+    OpenAPI_list_t *types_of_notifList = NULL;
+    notif_ctrl_inds = cJSON_GetObjectItemCaseSensitive(downlink_data_notification_controlJSON, "notifCtrlInds");
     if (notif_ctrl_inds) {
-    cJSON *notif_ctrl_inds_local_nonprimitive;
-    if (!cJSON_IsArray(notif_ctrl_inds)) {
-        ogs_error("OpenAPI_downlink_data_notification_control_parseFromJSON() failed [notif_ctrl_inds]");
-        goto end;
-    }
-
-    notif_ctrl_indsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(notif_ctrl_inds_local_nonprimitive, notif_ctrl_inds ) {
-        if (!cJSON_IsString(notif_ctrl_inds_local_nonprimitive)){
+        cJSON *notif_ctrl_inds_local_nonprimitive = NULL;
+        if (!cJSON_IsArray(notif_ctrl_inds)) {
             ogs_error("OpenAPI_downlink_data_notification_control_parseFromJSON() failed [notif_ctrl_inds]");
             goto end;
         }
 
-        OpenAPI_list_add(notif_ctrl_indsList, (void *)OpenAPI_notification_control_indication_FromString(notif_ctrl_inds_local_nonprimitive->valuestring));
-    }
+        notif_ctrl_indsList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(notif_ctrl_inds_local_nonprimitive, notif_ctrl_inds ) {
+            if (!cJSON_IsString(notif_ctrl_inds_local_nonprimitive)){
+                ogs_error("OpenAPI_downlink_data_notification_control_parseFromJSON() failed [notif_ctrl_inds]");
+                goto end;
+            }
+
+            OpenAPI_list_add(notif_ctrl_indsList, (void *)OpenAPI_notification_control_indication_FromString(notif_ctrl_inds_local_nonprimitive->valuestring));
+        }
     }
 
-    cJSON *types_of_notif = cJSON_GetObjectItemCaseSensitive(downlink_data_notification_controlJSON, "typesOfNotif");
-
-    OpenAPI_list_t *types_of_notifList;
+    types_of_notif = cJSON_GetObjectItemCaseSensitive(downlink_data_notification_controlJSON, "typesOfNotif");
     if (types_of_notif) {
-    cJSON *types_of_notif_local_nonprimitive;
-    if (!cJSON_IsArray(types_of_notif)) {
-        ogs_error("OpenAPI_downlink_data_notification_control_parseFromJSON() failed [types_of_notif]");
-        goto end;
-    }
-
-    types_of_notifList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(types_of_notif_local_nonprimitive, types_of_notif ) {
-        if (!cJSON_IsString(types_of_notif_local_nonprimitive)){
+        cJSON *types_of_notif_local_nonprimitive = NULL;
+        if (!cJSON_IsArray(types_of_notif)) {
             ogs_error("OpenAPI_downlink_data_notification_control_parseFromJSON() failed [types_of_notif]");
             goto end;
         }
 
-        OpenAPI_list_add(types_of_notifList, (void *)OpenAPI_dl_data_delivery_status_FromString(types_of_notif_local_nonprimitive->valuestring));
-    }
+        types_of_notifList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(types_of_notif_local_nonprimitive, types_of_notif ) {
+            if (!cJSON_IsString(types_of_notif_local_nonprimitive)){
+                ogs_error("OpenAPI_downlink_data_notification_control_parseFromJSON() failed [types_of_notif]");
+                goto end;
+            }
+
+            OpenAPI_list_add(types_of_notifList, (void *)OpenAPI_dl_data_delivery_status_FromString(types_of_notif_local_nonprimitive->valuestring));
+        }
     }
 
     downlink_data_notification_control_local_var = OpenAPI_downlink_data_notification_control_create (
@@ -127,6 +134,14 @@ OpenAPI_downlink_data_notification_control_t *OpenAPI_downlink_data_notification
 
     return downlink_data_notification_control_local_var;
 end:
+    if (notif_ctrl_indsList) {
+        OpenAPI_list_free(notif_ctrl_indsList);
+        notif_ctrl_indsList = NULL;
+    }
+    if (types_of_notifList) {
+        OpenAPI_list_free(types_of_notifList);
+        types_of_notifList = NULL;
+    }
     return NULL;
 }
 

@@ -58,8 +58,10 @@ end:
 OpenAPI_ec_restriction_data_wb_t *OpenAPI_ec_restriction_data_wb_parseFromJSON(cJSON *ec_restriction_data_wbJSON)
 {
     OpenAPI_ec_restriction_data_wb_t *ec_restriction_data_wb_local_var = NULL;
-    cJSON *ec_mode_a_restricted = cJSON_GetObjectItemCaseSensitive(ec_restriction_data_wbJSON, "ecModeARestricted");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *ec_mode_a_restricted = NULL;
+    cJSON *ec_mode_b_restricted = NULL;
+    ec_mode_a_restricted = cJSON_GetObjectItemCaseSensitive(ec_restriction_data_wbJSON, "ecModeARestricted");
     if (ec_mode_a_restricted) {
     if (!cJSON_IsBool(ec_mode_a_restricted)) {
         ogs_error("OpenAPI_ec_restriction_data_wb_parseFromJSON() failed [ec_mode_a_restricted]");
@@ -67,12 +69,11 @@ OpenAPI_ec_restriction_data_wb_t *OpenAPI_ec_restriction_data_wb_parseFromJSON(c
     }
     }
 
-    cJSON *ec_mode_b_restricted = cJSON_GetObjectItemCaseSensitive(ec_restriction_data_wbJSON, "ecModeBRestricted");
+    ec_mode_b_restricted = cJSON_GetObjectItemCaseSensitive(ec_restriction_data_wbJSON, "ecModeBRestricted");
     if (!ec_mode_b_restricted) {
         ogs_error("OpenAPI_ec_restriction_data_wb_parseFromJSON() failed [ec_mode_b_restricted]");
         goto end;
     }
-
     if (!cJSON_IsBool(ec_mode_b_restricted)) {
         ogs_error("OpenAPI_ec_restriction_data_wb_parseFromJSON() failed [ec_mode_b_restricted]");
         goto end;

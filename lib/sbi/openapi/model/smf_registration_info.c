@@ -22,10 +22,13 @@ void OpenAPI_smf_registration_info_free(OpenAPI_smf_registration_info_t *smf_reg
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(smf_registration_info->smf_registration_list, node) {
-        OpenAPI_smf_registration_free(node->data);
+    if (smf_registration_info->smf_registration_list) {
+        OpenAPI_list_for_each(smf_registration_info->smf_registration_list, node) {
+            OpenAPI_smf_registration_free(node->data);
+        }
+        OpenAPI_list_free(smf_registration_info->smf_registration_list);
+        smf_registration_info->smf_registration_list = NULL;
     }
-    OpenAPI_list_free(smf_registration_info->smf_registration_list);
     ogs_free(smf_registration_info);
 }
 
@@ -39,6 +42,10 @@ cJSON *OpenAPI_smf_registration_info_convertToJSON(OpenAPI_smf_registration_info
     }
 
     item = cJSON_CreateObject();
+    if (!smf_registration_info->smf_registration_list) {
+        ogs_error("OpenAPI_smf_registration_info_convertToJSON() failed [smf_registration_list]");
+        return NULL;
+    }
     cJSON *smf_registration_listList = cJSON_AddArrayToObject(item, "smfRegistrationList");
     if (smf_registration_listList == NULL) {
         ogs_error("OpenAPI_smf_registration_info_convertToJSON() failed [smf_registration_list]");
@@ -64,36 +71,37 @@ end:
 OpenAPI_smf_registration_info_t *OpenAPI_smf_registration_info_parseFromJSON(cJSON *smf_registration_infoJSON)
 {
     OpenAPI_smf_registration_info_t *smf_registration_info_local_var = NULL;
-    cJSON *smf_registration_list = cJSON_GetObjectItemCaseSensitive(smf_registration_infoJSON, "smfRegistrationList");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *smf_registration_list = NULL;
+    OpenAPI_list_t *smf_registration_listList = NULL;
+    smf_registration_list = cJSON_GetObjectItemCaseSensitive(smf_registration_infoJSON, "smfRegistrationList");
     if (!smf_registration_list) {
         ogs_error("OpenAPI_smf_registration_info_parseFromJSON() failed [smf_registration_list]");
         goto end;
     }
-
-    OpenAPI_list_t *smf_registration_listList;
-    cJSON *smf_registration_list_local_nonprimitive;
-    if (!cJSON_IsArray(smf_registration_list)){
-        ogs_error("OpenAPI_smf_registration_info_parseFromJSON() failed [smf_registration_list]");
-        goto end;
-    }
-
-    smf_registration_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(smf_registration_list_local_nonprimitive, smf_registration_list ) {
-        if (!cJSON_IsObject(smf_registration_list_local_nonprimitive)) {
+        cJSON *smf_registration_list_local_nonprimitive;
+        if (!cJSON_IsArray(smf_registration_list)){
             ogs_error("OpenAPI_smf_registration_info_parseFromJSON() failed [smf_registration_list]");
             goto end;
         }
-        OpenAPI_smf_registration_t *smf_registration_listItem = OpenAPI_smf_registration_parseFromJSON(smf_registration_list_local_nonprimitive);
 
-        if (!smf_registration_listItem) {
-            ogs_error("No smf_registration_listItem");
-            OpenAPI_list_free(smf_registration_listList);
-            goto end;
+        smf_registration_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(smf_registration_list_local_nonprimitive, smf_registration_list ) {
+            if (!cJSON_IsObject(smf_registration_list_local_nonprimitive)) {
+                ogs_error("OpenAPI_smf_registration_info_parseFromJSON() failed [smf_registration_list]");
+                goto end;
+            }
+            OpenAPI_smf_registration_t *smf_registration_listItem = OpenAPI_smf_registration_parseFromJSON(smf_registration_list_local_nonprimitive);
+
+            if (!smf_registration_listItem) {
+                ogs_error("No smf_registration_listItem");
+                OpenAPI_list_free(smf_registration_listList);
+                goto end;
+            }
+
+            OpenAPI_list_add(smf_registration_listList, smf_registration_listItem);
         }
-
-        OpenAPI_list_add(smf_registration_listList, smf_registration_listItem);
-    }
 
     smf_registration_info_local_var = OpenAPI_smf_registration_info_create (
         smf_registration_listList
@@ -101,6 +109,13 @@ OpenAPI_smf_registration_info_t *OpenAPI_smf_registration_info_parseFromJSON(cJS
 
     return smf_registration_info_local_var;
 end:
+    if (smf_registration_listList) {
+        OpenAPI_list_for_each(smf_registration_listList, node) {
+            OpenAPI_smf_registration_free(node->data);
+        }
+        OpenAPI_list_free(smf_registration_listList);
+        smf_registration_listList = NULL;
+    }
     return NULL;
 }
 

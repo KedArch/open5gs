@@ -40,6 +40,7 @@ end:
 OpenAPI_event_report_mode_t *OpenAPI_event_report_mode_parseFromJSON(cJSON *event_report_modeJSON)
 {
     OpenAPI_event_report_mode_t *event_report_mode_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     event_report_mode_local_var = OpenAPI_event_report_mode_create (
     );
 

@@ -35,6 +35,10 @@ cJSON *OpenAPI_redundant_pdu_session_information_convertToJSON(OpenAPI_redundant
     }
 
     item = cJSON_CreateObject();
+    if (redundant_pdu_session_information->rsn == OpenAPI_rsn_NULL) {
+        ogs_error("OpenAPI_redundant_pdu_session_information_convertToJSON() failed [rsn]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "rsn", OpenAPI_rsn_ToString(redundant_pdu_session_information->rsn)) == NULL) {
         ogs_error("OpenAPI_redundant_pdu_session_information_convertToJSON() failed [rsn]");
         goto end;
@@ -47,13 +51,14 @@ end:
 OpenAPI_redundant_pdu_session_information_t *OpenAPI_redundant_pdu_session_information_parseFromJSON(cJSON *redundant_pdu_session_informationJSON)
 {
     OpenAPI_redundant_pdu_session_information_t *redundant_pdu_session_information_local_var = NULL;
-    cJSON *rsn = cJSON_GetObjectItemCaseSensitive(redundant_pdu_session_informationJSON, "rsn");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *rsn = NULL;
+    OpenAPI_rsn_e rsnVariable = 0;
+    rsn = cJSON_GetObjectItemCaseSensitive(redundant_pdu_session_informationJSON, "rsn");
     if (!rsn) {
         ogs_error("OpenAPI_redundant_pdu_session_information_parseFromJSON() failed [rsn]");
         goto end;
     }
-
-    OpenAPI_rsn_e rsnVariable;
     if (!cJSON_IsString(rsn)) {
         ogs_error("OpenAPI_redundant_pdu_session_information_parseFromJSON() failed [rsn]");
         goto end;

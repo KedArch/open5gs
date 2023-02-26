@@ -24,14 +24,20 @@ void OpenAPI_pfd_data_free(OpenAPI_pfd_data_t *pfd_data)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(pfd_data->app_ids, node) {
-        ogs_free(node->data);
+    if (pfd_data->app_ids) {
+        OpenAPI_list_for_each(pfd_data->app_ids, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(pfd_data->app_ids);
+        pfd_data->app_ids = NULL;
     }
-    OpenAPI_list_free(pfd_data->app_ids);
-    OpenAPI_list_for_each(pfd_data->af_ids, node) {
-        ogs_free(node->data);
+    if (pfd_data->af_ids) {
+        OpenAPI_list_for_each(pfd_data->af_ids, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(pfd_data->af_ids);
+        pfd_data->af_ids = NULL;
     }
-    OpenAPI_list_free(pfd_data->af_ids);
     ogs_free(pfd_data);
 }
 
@@ -84,44 +90,45 @@ end:
 OpenAPI_pfd_data_t *OpenAPI_pfd_data_parseFromJSON(cJSON *pfd_dataJSON)
 {
     OpenAPI_pfd_data_t *pfd_data_local_var = NULL;
-    cJSON *app_ids = cJSON_GetObjectItemCaseSensitive(pfd_dataJSON, "appIds");
-
-    OpenAPI_list_t *app_idsList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *app_ids = NULL;
+    OpenAPI_list_t *app_idsList = NULL;
+    cJSON *af_ids = NULL;
+    OpenAPI_list_t *af_idsList = NULL;
+    app_ids = cJSON_GetObjectItemCaseSensitive(pfd_dataJSON, "appIds");
     if (app_ids) {
-    cJSON *app_ids_local;
-    if (!cJSON_IsArray(app_ids)) {
-        ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [app_ids]");
-        goto end;
-    }
-    app_idsList = OpenAPI_list_create();
+        cJSON *app_ids_local;
+        if (!cJSON_IsArray(app_ids)) {
+            ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [app_ids]");
+            goto end;
+        }
+        app_idsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(app_ids_local, app_ids) {
-    if (!cJSON_IsString(app_ids_local)) {
-        ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [app_ids]");
-        goto end;
-    }
-    OpenAPI_list_add(app_idsList, ogs_strdup(app_ids_local->valuestring));
-    }
+        cJSON_ArrayForEach(app_ids_local, app_ids) {
+        if (!cJSON_IsString(app_ids_local)) {
+            ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [app_ids]");
+            goto end;
+        }
+        OpenAPI_list_add(app_idsList, ogs_strdup(app_ids_local->valuestring));
+        }
     }
 
-    cJSON *af_ids = cJSON_GetObjectItemCaseSensitive(pfd_dataJSON, "afIds");
-
-    OpenAPI_list_t *af_idsList;
+    af_ids = cJSON_GetObjectItemCaseSensitive(pfd_dataJSON, "afIds");
     if (af_ids) {
-    cJSON *af_ids_local;
-    if (!cJSON_IsArray(af_ids)) {
-        ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [af_ids]");
-        goto end;
-    }
-    af_idsList = OpenAPI_list_create();
+        cJSON *af_ids_local;
+        if (!cJSON_IsArray(af_ids)) {
+            ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [af_ids]");
+            goto end;
+        }
+        af_idsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(af_ids_local, af_ids) {
-    if (!cJSON_IsString(af_ids_local)) {
-        ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [af_ids]");
-        goto end;
-    }
-    OpenAPI_list_add(af_idsList, ogs_strdup(af_ids_local->valuestring));
-    }
+        cJSON_ArrayForEach(af_ids_local, af_ids) {
+        if (!cJSON_IsString(af_ids_local)) {
+            ogs_error("OpenAPI_pfd_data_parseFromJSON() failed [af_ids]");
+            goto end;
+        }
+        OpenAPI_list_add(af_idsList, ogs_strdup(af_ids_local->valuestring));
+        }
     }
 
     pfd_data_local_var = OpenAPI_pfd_data_create (
@@ -131,6 +138,20 @@ OpenAPI_pfd_data_t *OpenAPI_pfd_data_parseFromJSON(cJSON *pfd_dataJSON)
 
     return pfd_data_local_var;
 end:
+    if (app_idsList) {
+        OpenAPI_list_for_each(app_idsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(app_idsList);
+        app_idsList = NULL;
+    }
+    if (af_idsList) {
+        OpenAPI_list_for_each(af_idsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(af_idsList);
+        af_idsList = NULL;
+    }
     return NULL;
 }
 

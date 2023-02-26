@@ -40,6 +40,7 @@ end:
 OpenAPI_bdt_policy_status_t *OpenAPI_bdt_policy_status_parseFromJSON(cJSON *bdt_policy_statusJSON)
 {
     OpenAPI_bdt_policy_status_t *bdt_policy_status_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     bdt_policy_status_local_var = OpenAPI_bdt_policy_status_create (
     );
 

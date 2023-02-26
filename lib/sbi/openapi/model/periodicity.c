@@ -40,6 +40,7 @@ end:
 OpenAPI_periodicity_t *OpenAPI_periodicity_parseFromJSON(cJSON *periodicityJSON)
 {
     OpenAPI_periodicity_t *periodicity_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     periodicity_local_var = OpenAPI_periodicity_create (
     );
 

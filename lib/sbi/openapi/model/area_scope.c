@@ -28,25 +28,37 @@ void OpenAPI_area_scope_free(OpenAPI_area_scope_t *area_scope)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(area_scope->eutra_cell_id_list, node) {
-        ogs_free(node->data);
+    if (area_scope->eutra_cell_id_list) {
+        OpenAPI_list_for_each(area_scope->eutra_cell_id_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(area_scope->eutra_cell_id_list);
+        area_scope->eutra_cell_id_list = NULL;
     }
-    OpenAPI_list_free(area_scope->eutra_cell_id_list);
-    OpenAPI_list_for_each(area_scope->nr_cell_id_list, node) {
-        ogs_free(node->data);
+    if (area_scope->nr_cell_id_list) {
+        OpenAPI_list_for_each(area_scope->nr_cell_id_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(area_scope->nr_cell_id_list);
+        area_scope->nr_cell_id_list = NULL;
     }
-    OpenAPI_list_free(area_scope->nr_cell_id_list);
-    OpenAPI_list_for_each(area_scope->tac_list, node) {
-        ogs_free(node->data);
+    if (area_scope->tac_list) {
+        OpenAPI_list_for_each(area_scope->tac_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(area_scope->tac_list);
+        area_scope->tac_list = NULL;
     }
-    OpenAPI_list_free(area_scope->tac_list);
-    OpenAPI_list_for_each(area_scope->tac_info_per_plmn, node) {
-        OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*)node->data;
-        ogs_free(localKeyValue->key);
-        OpenAPI_tac_info_free(localKeyValue->value);
-        ogs_free(localKeyValue);
+    if (area_scope->tac_info_per_plmn) {
+        OpenAPI_list_for_each(area_scope->tac_info_per_plmn, node) {
+            OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*)node->data;
+            ogs_free(localKeyValue->key);
+            OpenAPI_tac_info_free(localKeyValue->value);
+            OpenAPI_map_free(localKeyValue);
+        }
+        OpenAPI_list_free(area_scope->tac_info_per_plmn);
+        area_scope->tac_info_per_plmn = NULL;
     }
-    OpenAPI_list_free(area_scope->tac_info_per_plmn);
     ogs_free(area_scope);
 }
 
@@ -138,90 +150,93 @@ end:
 OpenAPI_area_scope_t *OpenAPI_area_scope_parseFromJSON(cJSON *area_scopeJSON)
 {
     OpenAPI_area_scope_t *area_scope_local_var = NULL;
-    cJSON *eutra_cell_id_list = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "eutraCellIdList");
-
-    OpenAPI_list_t *eutra_cell_id_listList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *eutra_cell_id_list = NULL;
+    OpenAPI_list_t *eutra_cell_id_listList = NULL;
+    cJSON *nr_cell_id_list = NULL;
+    OpenAPI_list_t *nr_cell_id_listList = NULL;
+    cJSON *tac_list = NULL;
+    OpenAPI_list_t *tac_listList = NULL;
+    cJSON *tac_info_per_plmn = NULL;
+    OpenAPI_list_t *tac_info_per_plmnList = NULL;
+    eutra_cell_id_list = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "eutraCellIdList");
     if (eutra_cell_id_list) {
-    cJSON *eutra_cell_id_list_local;
-    if (!cJSON_IsArray(eutra_cell_id_list)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [eutra_cell_id_list]");
-        goto end;
-    }
-    eutra_cell_id_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(eutra_cell_id_list_local, eutra_cell_id_list) {
-    if (!cJSON_IsString(eutra_cell_id_list_local)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [eutra_cell_id_list]");
-        goto end;
-    }
-    OpenAPI_list_add(eutra_cell_id_listList, ogs_strdup(eutra_cell_id_list_local->valuestring));
-    }
-    }
-
-    cJSON *nr_cell_id_list = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "nrCellIdList");
-
-    OpenAPI_list_t *nr_cell_id_listList;
-    if (nr_cell_id_list) {
-    cJSON *nr_cell_id_list_local;
-    if (!cJSON_IsArray(nr_cell_id_list)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [nr_cell_id_list]");
-        goto end;
-    }
-    nr_cell_id_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(nr_cell_id_list_local, nr_cell_id_list) {
-    if (!cJSON_IsString(nr_cell_id_list_local)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [nr_cell_id_list]");
-        goto end;
-    }
-    OpenAPI_list_add(nr_cell_id_listList, ogs_strdup(nr_cell_id_list_local->valuestring));
-    }
-    }
-
-    cJSON *tac_list = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "tacList");
-
-    OpenAPI_list_t *tac_listList;
-    if (tac_list) {
-    cJSON *tac_list_local;
-    if (!cJSON_IsArray(tac_list)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [tac_list]");
-        goto end;
-    }
-    tac_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(tac_list_local, tac_list) {
-    if (!cJSON_IsString(tac_list_local)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [tac_list]");
-        goto end;
-    }
-    OpenAPI_list_add(tac_listList, ogs_strdup(tac_list_local->valuestring));
-    }
-    }
-
-    cJSON *tac_info_per_plmn = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "tacInfoPerPlmn");
-
-    OpenAPI_list_t *tac_info_per_plmnList;
-    if (tac_info_per_plmn) {
-    cJSON *tac_info_per_plmn_local_map;
-    if (!cJSON_IsObject(tac_info_per_plmn)) {
-        ogs_error("OpenAPI_area_scope_parseFromJSON() failed [tac_info_per_plmn]");
-        goto end;
-    }
-    tac_info_per_plmnList = OpenAPI_list_create();
-    OpenAPI_map_t *localMapKeyPair = NULL;
-    cJSON_ArrayForEach(tac_info_per_plmn_local_map, tac_info_per_plmn) {
-        cJSON *localMapObject = tac_info_per_plmn_local_map;
-        if (cJSON_IsObject(localMapObject)) {
-            localMapKeyPair = OpenAPI_map_create(
-                ogs_strdup(localMapObject->string), OpenAPI_tac_info_parseFromJSON(localMapObject));
-        } else if (cJSON_IsNull(localMapObject)) {
-            localMapKeyPair = OpenAPI_map_create(ogs_strdup(localMapObject->string), NULL);
-        } else {
-            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [inner]");
+        cJSON *eutra_cell_id_list_local;
+        if (!cJSON_IsArray(eutra_cell_id_list)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [eutra_cell_id_list]");
             goto end;
         }
-        OpenAPI_list_add(tac_info_per_plmnList, localMapKeyPair);
+        eutra_cell_id_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(eutra_cell_id_list_local, eutra_cell_id_list) {
+        if (!cJSON_IsString(eutra_cell_id_list_local)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [eutra_cell_id_list]");
+            goto end;
+        }
+        OpenAPI_list_add(eutra_cell_id_listList, ogs_strdup(eutra_cell_id_list_local->valuestring));
+        }
     }
+
+    nr_cell_id_list = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "nrCellIdList");
+    if (nr_cell_id_list) {
+        cJSON *nr_cell_id_list_local;
+        if (!cJSON_IsArray(nr_cell_id_list)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [nr_cell_id_list]");
+            goto end;
+        }
+        nr_cell_id_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(nr_cell_id_list_local, nr_cell_id_list) {
+        if (!cJSON_IsString(nr_cell_id_list_local)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [nr_cell_id_list]");
+            goto end;
+        }
+        OpenAPI_list_add(nr_cell_id_listList, ogs_strdup(nr_cell_id_list_local->valuestring));
+        }
+    }
+
+    tac_list = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "tacList");
+    if (tac_list) {
+        cJSON *tac_list_local;
+        if (!cJSON_IsArray(tac_list)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [tac_list]");
+            goto end;
+        }
+        tac_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(tac_list_local, tac_list) {
+        if (!cJSON_IsString(tac_list_local)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [tac_list]");
+            goto end;
+        }
+        OpenAPI_list_add(tac_listList, ogs_strdup(tac_list_local->valuestring));
+        }
+    }
+
+    tac_info_per_plmn = cJSON_GetObjectItemCaseSensitive(area_scopeJSON, "tacInfoPerPlmn");
+    if (tac_info_per_plmn) {
+        cJSON *tac_info_per_plmn_local_map = NULL;
+        if (!cJSON_IsObject(tac_info_per_plmn) && !cJSON_IsNull(tac_info_per_plmn)) {
+            ogs_error("OpenAPI_area_scope_parseFromJSON() failed [tac_info_per_plmn]");
+            goto end;
+        }
+        if (cJSON_IsObject(tac_info_per_plmn)) {
+            tac_info_per_plmnList = OpenAPI_list_create();
+            OpenAPI_map_t *localMapKeyPair = NULL;
+            cJSON_ArrayForEach(tac_info_per_plmn_local_map, tac_info_per_plmn) {
+                cJSON *localMapObject = tac_info_per_plmn_local_map;
+                if (cJSON_IsObject(localMapObject)) {
+                    localMapKeyPair = OpenAPI_map_create(
+                        ogs_strdup(localMapObject->string), OpenAPI_tac_info_parseFromJSON(localMapObject));
+                } else if (cJSON_IsNull(localMapObject)) {
+                    localMapKeyPair = OpenAPI_map_create(ogs_strdup(localMapObject->string), NULL);
+                } else {
+                    ogs_error("OpenAPI_area_scope_parseFromJSON() failed [inner]");
+                    goto end;
+                }
+                OpenAPI_list_add(tac_info_per_plmnList, localMapKeyPair);
+            }
+        }
     }
 
     area_scope_local_var = OpenAPI_area_scope_create (
@@ -233,6 +248,37 @@ OpenAPI_area_scope_t *OpenAPI_area_scope_parseFromJSON(cJSON *area_scopeJSON)
 
     return area_scope_local_var;
 end:
+    if (eutra_cell_id_listList) {
+        OpenAPI_list_for_each(eutra_cell_id_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(eutra_cell_id_listList);
+        eutra_cell_id_listList = NULL;
+    }
+    if (nr_cell_id_listList) {
+        OpenAPI_list_for_each(nr_cell_id_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(nr_cell_id_listList);
+        nr_cell_id_listList = NULL;
+    }
+    if (tac_listList) {
+        OpenAPI_list_for_each(tac_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(tac_listList);
+        tac_listList = NULL;
+    }
+    if (tac_info_per_plmnList) {
+        OpenAPI_list_for_each(tac_info_per_plmnList, node) {
+            OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*) node->data;
+            ogs_free(localKeyValue->key);
+            OpenAPI_tac_info_free(localKeyValue->value);
+            OpenAPI_map_free(localKeyValue);
+        }
+        OpenAPI_list_free(tac_info_per_plmnList);
+        tac_info_per_plmnList = NULL;
+    }
     return NULL;
 }
 

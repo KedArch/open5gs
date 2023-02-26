@@ -47,12 +47,13 @@ end:
 OpenAPI_pws_error_data_t *OpenAPI_pws_error_data_parseFromJSON(cJSON *pws_error_dataJSON)
 {
     OpenAPI_pws_error_data_t *pws_error_data_local_var = NULL;
-    cJSON *namf_cause = cJSON_GetObjectItemCaseSensitive(pws_error_dataJSON, "namfCause");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *namf_cause = NULL;
+    namf_cause = cJSON_GetObjectItemCaseSensitive(pws_error_dataJSON, "namfCause");
     if (!namf_cause) {
         ogs_error("OpenAPI_pws_error_data_parseFromJSON() failed [namf_cause]");
         goto end;
     }
-
     if (!cJSON_IsNumber(namf_cause)) {
         ogs_error("OpenAPI_pws_error_data_parseFromJSON() failed [namf_cause]");
         goto end;

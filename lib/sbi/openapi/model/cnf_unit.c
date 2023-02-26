@@ -22,10 +22,13 @@ void OpenAPI_cnf_unit_free(OpenAPI_cnf_unit_t *cnf_unit)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(cnf_unit->cnf_unit, node) {
-        OpenAPI_atom_free(node->data);
+    if (cnf_unit->cnf_unit) {
+        OpenAPI_list_for_each(cnf_unit->cnf_unit, node) {
+            OpenAPI_atom_free(node->data);
+        }
+        OpenAPI_list_free(cnf_unit->cnf_unit);
+        cnf_unit->cnf_unit = NULL;
     }
-    OpenAPI_list_free(cnf_unit->cnf_unit);
     ogs_free(cnf_unit);
 }
 
@@ -39,6 +42,10 @@ cJSON *OpenAPI_cnf_unit_convertToJSON(OpenAPI_cnf_unit_t *cnf_unit)
     }
 
     item = cJSON_CreateObject();
+    if (!cnf_unit->cnf_unit) {
+        ogs_error("OpenAPI_cnf_unit_convertToJSON() failed [cnf_unit]");
+        return NULL;
+    }
     cJSON *cnf_unitList = cJSON_AddArrayToObject(item, "cnfUnit");
     if (cnf_unitList == NULL) {
         ogs_error("OpenAPI_cnf_unit_convertToJSON() failed [cnf_unit]");
@@ -64,36 +71,37 @@ end:
 OpenAPI_cnf_unit_t *OpenAPI_cnf_unit_parseFromJSON(cJSON *cnf_unitJSON)
 {
     OpenAPI_cnf_unit_t *cnf_unit_local_var = NULL;
-    cJSON *cnf_unit = cJSON_GetObjectItemCaseSensitive(cnf_unitJSON, "cnfUnit");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *cnf_unit = NULL;
+    OpenAPI_list_t *cnf_unitList = NULL;
+    cnf_unit = cJSON_GetObjectItemCaseSensitive(cnf_unitJSON, "cnfUnit");
     if (!cnf_unit) {
         ogs_error("OpenAPI_cnf_unit_parseFromJSON() failed [cnf_unit]");
         goto end;
     }
-
-    OpenAPI_list_t *cnf_unitList;
-    cJSON *cnf_unit_local_nonprimitive;
-    if (!cJSON_IsArray(cnf_unit)){
-        ogs_error("OpenAPI_cnf_unit_parseFromJSON() failed [cnf_unit]");
-        goto end;
-    }
-
-    cnf_unitList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(cnf_unit_local_nonprimitive, cnf_unit ) {
-        if (!cJSON_IsObject(cnf_unit_local_nonprimitive)) {
+        cJSON *cnf_unit_local_nonprimitive;
+        if (!cJSON_IsArray(cnf_unit)){
             ogs_error("OpenAPI_cnf_unit_parseFromJSON() failed [cnf_unit]");
             goto end;
         }
-        OpenAPI_atom_t *cnf_unitItem = OpenAPI_atom_parseFromJSON(cnf_unit_local_nonprimitive);
 
-        if (!cnf_unitItem) {
-            ogs_error("No cnf_unitItem");
-            OpenAPI_list_free(cnf_unitList);
-            goto end;
+        cnf_unitList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(cnf_unit_local_nonprimitive, cnf_unit ) {
+            if (!cJSON_IsObject(cnf_unit_local_nonprimitive)) {
+                ogs_error("OpenAPI_cnf_unit_parseFromJSON() failed [cnf_unit]");
+                goto end;
+            }
+            OpenAPI_atom_t *cnf_unitItem = OpenAPI_atom_parseFromJSON(cnf_unit_local_nonprimitive);
+
+            if (!cnf_unitItem) {
+                ogs_error("No cnf_unitItem");
+                OpenAPI_list_free(cnf_unitList);
+                goto end;
+            }
+
+            OpenAPI_list_add(cnf_unitList, cnf_unitItem);
         }
-
-        OpenAPI_list_add(cnf_unitList, cnf_unitItem);
-    }
 
     cnf_unit_local_var = OpenAPI_cnf_unit_create (
         cnf_unitList
@@ -101,6 +109,13 @@ OpenAPI_cnf_unit_t *OpenAPI_cnf_unit_parseFromJSON(cJSON *cnf_unitJSON)
 
     return cnf_unit_local_var;
 end:
+    if (cnf_unitList) {
+        OpenAPI_list_for_each(cnf_unitList, node) {
+            OpenAPI_atom_free(node->data);
+        }
+        OpenAPI_list_free(cnf_unitList);
+        cnf_unitList = NULL;
+    }
     return NULL;
 }
 

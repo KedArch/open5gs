@@ -47,12 +47,13 @@ end:
 OpenAPI_ce_mode_b_ind_t *OpenAPI_ce_mode_b_ind_parseFromJSON(cJSON *ce_mode_b_indJSON)
 {
     OpenAPI_ce_mode_b_ind_t *ce_mode_b_ind_local_var = NULL;
-    cJSON *ce_mode_b_support_ind = cJSON_GetObjectItemCaseSensitive(ce_mode_b_indJSON, "ceModeBSupportInd");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *ce_mode_b_support_ind = NULL;
+    ce_mode_b_support_ind = cJSON_GetObjectItemCaseSensitive(ce_mode_b_indJSON, "ceModeBSupportInd");
     if (!ce_mode_b_support_ind) {
         ogs_error("OpenAPI_ce_mode_b_ind_parseFromJSON() failed [ce_mode_b_support_ind]");
         goto end;
     }
-
     if (!cJSON_IsBool(ce_mode_b_support_ind)) {
         ogs_error("OpenAPI_ce_mode_b_ind_parseFromJSON() failed [ce_mode_b_support_ind]");
         goto end;

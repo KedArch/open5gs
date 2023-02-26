@@ -54,23 +54,24 @@ end:
 OpenAPI_geographical_coordinates_t *OpenAPI_geographical_coordinates_parseFromJSON(cJSON *geographical_coordinatesJSON)
 {
     OpenAPI_geographical_coordinates_t *geographical_coordinates_local_var = NULL;
-    cJSON *lon = cJSON_GetObjectItemCaseSensitive(geographical_coordinatesJSON, "lon");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *lon = NULL;
+    cJSON *lat = NULL;
+    lon = cJSON_GetObjectItemCaseSensitive(geographical_coordinatesJSON, "lon");
     if (!lon) {
         ogs_error("OpenAPI_geographical_coordinates_parseFromJSON() failed [lon]");
         goto end;
     }
-
     if (!cJSON_IsNumber(lon)) {
         ogs_error("OpenAPI_geographical_coordinates_parseFromJSON() failed [lon]");
         goto end;
     }
 
-    cJSON *lat = cJSON_GetObjectItemCaseSensitive(geographical_coordinatesJSON, "lat");
+    lat = cJSON_GetObjectItemCaseSensitive(geographical_coordinatesJSON, "lat");
     if (!lat) {
         ogs_error("OpenAPI_geographical_coordinates_parseFromJSON() failed [lat]");
         goto end;
     }
-
     if (!cJSON_IsNumber(lat)) {
         ogs_error("OpenAPI_geographical_coordinates_parseFromJSON() failed [lat]");
         goto end;

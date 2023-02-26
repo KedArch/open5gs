@@ -40,6 +40,7 @@ end:
 OpenAPI_final_unit_action_t *OpenAPI_final_unit_action_parseFromJSON(cJSON *final_unit_actionJSON)
 {
     OpenAPI_final_unit_action_t *final_unit_action_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     final_unit_action_local_var = OpenAPI_final_unit_action_create (
     );
 

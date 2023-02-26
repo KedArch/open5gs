@@ -40,6 +40,7 @@ end:
 OpenAPI_partial_record_method_t *OpenAPI_partial_record_method_parseFromJSON(cJSON *partial_record_methodJSON)
 {
     OpenAPI_partial_record_method_t *partial_record_method_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     partial_record_method_local_var = OpenAPI_partial_record_method_create (
     );
 

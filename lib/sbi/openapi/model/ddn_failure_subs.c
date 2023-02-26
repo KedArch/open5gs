@@ -26,10 +26,13 @@ void OpenAPI_ddn_failure_subs_free(OpenAPI_ddn_failure_subs_t *ddn_failure_subs)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(ddn_failure_subs->ddn_failure_subs_info_list, node) {
-        OpenAPI_ddn_failure_sub_info_free(node->data);
+    if (ddn_failure_subs->ddn_failure_subs_info_list) {
+        OpenAPI_list_for_each(ddn_failure_subs->ddn_failure_subs_info_list, node) {
+            OpenAPI_ddn_failure_sub_info_free(node->data);
+        }
+        OpenAPI_list_free(ddn_failure_subs->ddn_failure_subs_info_list);
+        ddn_failure_subs->ddn_failure_subs_info_list = NULL;
     }
-    OpenAPI_list_free(ddn_failure_subs->ddn_failure_subs_info_list);
     ogs_free(ddn_failure_subs);
 }
 
@@ -77,8 +80,11 @@ end:
 OpenAPI_ddn_failure_subs_t *OpenAPI_ddn_failure_subs_parseFromJSON(cJSON *ddn_failure_subsJSON)
 {
     OpenAPI_ddn_failure_subs_t *ddn_failure_subs_local_var = NULL;
-    cJSON *ddn_failure_subs_ind = cJSON_GetObjectItemCaseSensitive(ddn_failure_subsJSON, "ddnFailureSubsInd");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *ddn_failure_subs_ind = NULL;
+    cJSON *ddn_failure_subs_info_list = NULL;
+    OpenAPI_list_t *ddn_failure_subs_info_listList = NULL;
+    ddn_failure_subs_ind = cJSON_GetObjectItemCaseSensitive(ddn_failure_subsJSON, "ddnFailureSubsInd");
     if (ddn_failure_subs_ind) {
     if (!cJSON_IsBool(ddn_failure_subs_ind)) {
         ogs_error("OpenAPI_ddn_failure_subs_parseFromJSON() failed [ddn_failure_subs_ind]");
@@ -86,33 +92,31 @@ OpenAPI_ddn_failure_subs_t *OpenAPI_ddn_failure_subs_parseFromJSON(cJSON *ddn_fa
     }
     }
 
-    cJSON *ddn_failure_subs_info_list = cJSON_GetObjectItemCaseSensitive(ddn_failure_subsJSON, "ddnFailureSubsInfoList");
-
-    OpenAPI_list_t *ddn_failure_subs_info_listList;
+    ddn_failure_subs_info_list = cJSON_GetObjectItemCaseSensitive(ddn_failure_subsJSON, "ddnFailureSubsInfoList");
     if (ddn_failure_subs_info_list) {
-    cJSON *ddn_failure_subs_info_list_local_nonprimitive;
-    if (!cJSON_IsArray(ddn_failure_subs_info_list)){
-        ogs_error("OpenAPI_ddn_failure_subs_parseFromJSON() failed [ddn_failure_subs_info_list]");
-        goto end;
-    }
-
-    ddn_failure_subs_info_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(ddn_failure_subs_info_list_local_nonprimitive, ddn_failure_subs_info_list ) {
-        if (!cJSON_IsObject(ddn_failure_subs_info_list_local_nonprimitive)) {
+        cJSON *ddn_failure_subs_info_list_local_nonprimitive;
+        if (!cJSON_IsArray(ddn_failure_subs_info_list)){
             ogs_error("OpenAPI_ddn_failure_subs_parseFromJSON() failed [ddn_failure_subs_info_list]");
             goto end;
         }
-        OpenAPI_ddn_failure_sub_info_t *ddn_failure_subs_info_listItem = OpenAPI_ddn_failure_sub_info_parseFromJSON(ddn_failure_subs_info_list_local_nonprimitive);
 
-        if (!ddn_failure_subs_info_listItem) {
-            ogs_error("No ddn_failure_subs_info_listItem");
-            OpenAPI_list_free(ddn_failure_subs_info_listList);
-            goto end;
+        ddn_failure_subs_info_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(ddn_failure_subs_info_list_local_nonprimitive, ddn_failure_subs_info_list ) {
+            if (!cJSON_IsObject(ddn_failure_subs_info_list_local_nonprimitive)) {
+                ogs_error("OpenAPI_ddn_failure_subs_parseFromJSON() failed [ddn_failure_subs_info_list]");
+                goto end;
+            }
+            OpenAPI_ddn_failure_sub_info_t *ddn_failure_subs_info_listItem = OpenAPI_ddn_failure_sub_info_parseFromJSON(ddn_failure_subs_info_list_local_nonprimitive);
+
+            if (!ddn_failure_subs_info_listItem) {
+                ogs_error("No ddn_failure_subs_info_listItem");
+                OpenAPI_list_free(ddn_failure_subs_info_listList);
+                goto end;
+            }
+
+            OpenAPI_list_add(ddn_failure_subs_info_listList, ddn_failure_subs_info_listItem);
         }
-
-        OpenAPI_list_add(ddn_failure_subs_info_listList, ddn_failure_subs_info_listItem);
-    }
     }
 
     ddn_failure_subs_local_var = OpenAPI_ddn_failure_subs_create (
@@ -123,6 +127,13 @@ OpenAPI_ddn_failure_subs_t *OpenAPI_ddn_failure_subs_parseFromJSON(cJSON *ddn_fa
 
     return ddn_failure_subs_local_var;
 end:
+    if (ddn_failure_subs_info_listList) {
+        OpenAPI_list_for_each(ddn_failure_subs_info_listList, node) {
+            OpenAPI_ddn_failure_sub_info_free(node->data);
+        }
+        OpenAPI_list_free(ddn_failure_subs_info_listList);
+        ddn_failure_subs_info_listList = NULL;
+    }
     return NULL;
 }
 

@@ -24,14 +24,20 @@ void OpenAPI_notif_condition_free(OpenAPI_notif_condition_t *notif_condition)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(notif_condition->monitored_attributes, node) {
-        ogs_free(node->data);
+    if (notif_condition->monitored_attributes) {
+        OpenAPI_list_for_each(notif_condition->monitored_attributes, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(notif_condition->monitored_attributes);
+        notif_condition->monitored_attributes = NULL;
     }
-    OpenAPI_list_free(notif_condition->monitored_attributes);
-    OpenAPI_list_for_each(notif_condition->unmonitored_attributes, node) {
-        ogs_free(node->data);
+    if (notif_condition->unmonitored_attributes) {
+        OpenAPI_list_for_each(notif_condition->unmonitored_attributes, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(notif_condition->unmonitored_attributes);
+        notif_condition->unmonitored_attributes = NULL;
     }
-    OpenAPI_list_free(notif_condition->unmonitored_attributes);
     ogs_free(notif_condition);
 }
 
@@ -84,44 +90,45 @@ end:
 OpenAPI_notif_condition_t *OpenAPI_notif_condition_parseFromJSON(cJSON *notif_conditionJSON)
 {
     OpenAPI_notif_condition_t *notif_condition_local_var = NULL;
-    cJSON *monitored_attributes = cJSON_GetObjectItemCaseSensitive(notif_conditionJSON, "monitoredAttributes");
-
-    OpenAPI_list_t *monitored_attributesList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *monitored_attributes = NULL;
+    OpenAPI_list_t *monitored_attributesList = NULL;
+    cJSON *unmonitored_attributes = NULL;
+    OpenAPI_list_t *unmonitored_attributesList = NULL;
+    monitored_attributes = cJSON_GetObjectItemCaseSensitive(notif_conditionJSON, "monitoredAttributes");
     if (monitored_attributes) {
-    cJSON *monitored_attributes_local;
-    if (!cJSON_IsArray(monitored_attributes)) {
-        ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [monitored_attributes]");
-        goto end;
-    }
-    monitored_attributesList = OpenAPI_list_create();
+        cJSON *monitored_attributes_local;
+        if (!cJSON_IsArray(monitored_attributes)) {
+            ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [monitored_attributes]");
+            goto end;
+        }
+        monitored_attributesList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(monitored_attributes_local, monitored_attributes) {
-    if (!cJSON_IsString(monitored_attributes_local)) {
-        ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [monitored_attributes]");
-        goto end;
-    }
-    OpenAPI_list_add(monitored_attributesList, ogs_strdup(monitored_attributes_local->valuestring));
-    }
+        cJSON_ArrayForEach(monitored_attributes_local, monitored_attributes) {
+        if (!cJSON_IsString(monitored_attributes_local)) {
+            ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [monitored_attributes]");
+            goto end;
+        }
+        OpenAPI_list_add(monitored_attributesList, ogs_strdup(monitored_attributes_local->valuestring));
+        }
     }
 
-    cJSON *unmonitored_attributes = cJSON_GetObjectItemCaseSensitive(notif_conditionJSON, "unmonitoredAttributes");
-
-    OpenAPI_list_t *unmonitored_attributesList;
+    unmonitored_attributes = cJSON_GetObjectItemCaseSensitive(notif_conditionJSON, "unmonitoredAttributes");
     if (unmonitored_attributes) {
-    cJSON *unmonitored_attributes_local;
-    if (!cJSON_IsArray(unmonitored_attributes)) {
-        ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [unmonitored_attributes]");
-        goto end;
-    }
-    unmonitored_attributesList = OpenAPI_list_create();
+        cJSON *unmonitored_attributes_local;
+        if (!cJSON_IsArray(unmonitored_attributes)) {
+            ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [unmonitored_attributes]");
+            goto end;
+        }
+        unmonitored_attributesList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(unmonitored_attributes_local, unmonitored_attributes) {
-    if (!cJSON_IsString(unmonitored_attributes_local)) {
-        ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [unmonitored_attributes]");
-        goto end;
-    }
-    OpenAPI_list_add(unmonitored_attributesList, ogs_strdup(unmonitored_attributes_local->valuestring));
-    }
+        cJSON_ArrayForEach(unmonitored_attributes_local, unmonitored_attributes) {
+        if (!cJSON_IsString(unmonitored_attributes_local)) {
+            ogs_error("OpenAPI_notif_condition_parseFromJSON() failed [unmonitored_attributes]");
+            goto end;
+        }
+        OpenAPI_list_add(unmonitored_attributesList, ogs_strdup(unmonitored_attributes_local->valuestring));
+        }
     }
 
     notif_condition_local_var = OpenAPI_notif_condition_create (
@@ -131,6 +138,20 @@ OpenAPI_notif_condition_t *OpenAPI_notif_condition_parseFromJSON(cJSON *notif_co
 
     return notif_condition_local_var;
 end:
+    if (monitored_attributesList) {
+        OpenAPI_list_for_each(monitored_attributesList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(monitored_attributesList);
+        monitored_attributesList = NULL;
+    }
+    if (unmonitored_attributesList) {
+        OpenAPI_list_for_each(unmonitored_attributesList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(unmonitored_attributesList);
+        unmonitored_attributesList = NULL;
+    }
     return NULL;
 }
 

@@ -24,11 +24,17 @@ void OpenAPI_authorization_data_free(OpenAPI_authorization_data_t *authorization
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(authorization_data->authorization_data, node) {
-        OpenAPI_user_identifier_free(node->data);
+    if (authorization_data->authorization_data) {
+        OpenAPI_list_for_each(authorization_data->authorization_data, node) {
+            OpenAPI_user_identifier_free(node->data);
+        }
+        OpenAPI_list_free(authorization_data->authorization_data);
+        authorization_data->authorization_data = NULL;
     }
-    OpenAPI_list_free(authorization_data->authorization_data);
-    ogs_free(authorization_data->validity_time);
+    if (authorization_data->validity_time) {
+        ogs_free(authorization_data->validity_time);
+        authorization_data->validity_time = NULL;
+    }
     ogs_free(authorization_data);
 }
 
@@ -42,6 +48,10 @@ cJSON *OpenAPI_authorization_data_convertToJSON(OpenAPI_authorization_data_t *au
     }
 
     item = cJSON_CreateObject();
+    if (!authorization_data->authorization_data) {
+        ogs_error("OpenAPI_authorization_data_convertToJSON() failed [authorization_data]");
+        return NULL;
+    }
     cJSON *authorization_dataList = cJSON_AddArrayToObject(item, "authorizationData");
     if (authorization_dataList == NULL) {
         ogs_error("OpenAPI_authorization_data_convertToJSON() failed [authorization_data]");
@@ -74,41 +84,42 @@ end:
 OpenAPI_authorization_data_t *OpenAPI_authorization_data_parseFromJSON(cJSON *authorization_dataJSON)
 {
     OpenAPI_authorization_data_t *authorization_data_local_var = NULL;
-    cJSON *authorization_data = cJSON_GetObjectItemCaseSensitive(authorization_dataJSON, "authorizationData");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *authorization_data = NULL;
+    OpenAPI_list_t *authorization_dataList = NULL;
+    cJSON *validity_time = NULL;
+    authorization_data = cJSON_GetObjectItemCaseSensitive(authorization_dataJSON, "authorizationData");
     if (!authorization_data) {
         ogs_error("OpenAPI_authorization_data_parseFromJSON() failed [authorization_data]");
         goto end;
     }
-
-    OpenAPI_list_t *authorization_dataList;
-    cJSON *authorization_data_local_nonprimitive;
-    if (!cJSON_IsArray(authorization_data)){
-        ogs_error("OpenAPI_authorization_data_parseFromJSON() failed [authorization_data]");
-        goto end;
-    }
-
-    authorization_dataList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(authorization_data_local_nonprimitive, authorization_data ) {
-        if (!cJSON_IsObject(authorization_data_local_nonprimitive)) {
+        cJSON *authorization_data_local_nonprimitive;
+        if (!cJSON_IsArray(authorization_data)){
             ogs_error("OpenAPI_authorization_data_parseFromJSON() failed [authorization_data]");
             goto end;
         }
-        OpenAPI_user_identifier_t *authorization_dataItem = OpenAPI_user_identifier_parseFromJSON(authorization_data_local_nonprimitive);
 
-        if (!authorization_dataItem) {
-            ogs_error("No authorization_dataItem");
-            OpenAPI_list_free(authorization_dataList);
-            goto end;
+        authorization_dataList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(authorization_data_local_nonprimitive, authorization_data ) {
+            if (!cJSON_IsObject(authorization_data_local_nonprimitive)) {
+                ogs_error("OpenAPI_authorization_data_parseFromJSON() failed [authorization_data]");
+                goto end;
+            }
+            OpenAPI_user_identifier_t *authorization_dataItem = OpenAPI_user_identifier_parseFromJSON(authorization_data_local_nonprimitive);
+
+            if (!authorization_dataItem) {
+                ogs_error("No authorization_dataItem");
+                OpenAPI_list_free(authorization_dataList);
+                goto end;
+            }
+
+            OpenAPI_list_add(authorization_dataList, authorization_dataItem);
         }
 
-        OpenAPI_list_add(authorization_dataList, authorization_dataItem);
-    }
-
-    cJSON *validity_time = cJSON_GetObjectItemCaseSensitive(authorization_dataJSON, "validityTime");
-
+    validity_time = cJSON_GetObjectItemCaseSensitive(authorization_dataJSON, "validityTime");
     if (validity_time) {
-    if (!cJSON_IsString(validity_time)) {
+    if (!cJSON_IsString(validity_time) && !cJSON_IsNull(validity_time)) {
         ogs_error("OpenAPI_authorization_data_parseFromJSON() failed [validity_time]");
         goto end;
     }
@@ -116,11 +127,18 @@ OpenAPI_authorization_data_t *OpenAPI_authorization_data_parseFromJSON(cJSON *au
 
     authorization_data_local_var = OpenAPI_authorization_data_create (
         authorization_dataList,
-        validity_time ? ogs_strdup(validity_time->valuestring) : NULL
+        validity_time && !cJSON_IsNull(validity_time) ? ogs_strdup(validity_time->valuestring) : NULL
     );
 
     return authorization_data_local_var;
 end:
+    if (authorization_dataList) {
+        OpenAPI_list_for_each(authorization_dataList, node) {
+            OpenAPI_user_identifier_free(node->data);
+        }
+        OpenAPI_list_free(authorization_dataList);
+        authorization_dataList = NULL;
+    }
     return NULL;
 }
 

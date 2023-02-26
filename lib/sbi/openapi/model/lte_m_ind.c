@@ -47,12 +47,13 @@ end:
 OpenAPI_lte_m_ind_t *OpenAPI_lte_m_ind_parseFromJSON(cJSON *lte_m_indJSON)
 {
     OpenAPI_lte_m_ind_t *lte_m_ind_local_var = NULL;
-    cJSON *lte_cat_m_ind = cJSON_GetObjectItemCaseSensitive(lte_m_indJSON, "lteCatMInd");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *lte_cat_m_ind = NULL;
+    lte_cat_m_ind = cJSON_GetObjectItemCaseSensitive(lte_m_indJSON, "lteCatMInd");
     if (!lte_cat_m_ind) {
         ogs_error("OpenAPI_lte_m_ind_parseFromJSON() failed [lte_cat_m_ind]");
         goto end;
     }
-
     if (!cJSON_IsBool(lte_cat_m_ind)) {
         ogs_error("OpenAPI_lte_m_ind_parseFromJSON() failed [lte_cat_m_ind]");
         goto end;

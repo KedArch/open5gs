@@ -42,49 +42,79 @@ void OpenAPI_scp_info_free(OpenAPI_scp_info_t *scp_info)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(scp_info->scp_domain_info_list, node) {
-        OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*)node->data;
-        ogs_free(localKeyValue->key);
-        ogs_free(localKeyValue->value);
-        ogs_free(localKeyValue);
+    if (scp_info->scp_domain_info_list) {
+        OpenAPI_list_for_each(scp_info->scp_domain_info_list, node) {
+            OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*)node->data;
+            ogs_free(localKeyValue->key);
+            ogs_free(localKeyValue->value);
+            OpenAPI_map_free(localKeyValue);
+        }
+        OpenAPI_list_free(scp_info->scp_domain_info_list);
+        scp_info->scp_domain_info_list = NULL;
     }
-    OpenAPI_list_free(scp_info->scp_domain_info_list);
-    ogs_free(scp_info->scp_prefix);
-    OpenAPI_list_for_each(scp_info->scp_ports, node) {
-        OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*)node->data;
-        ogs_free(localKeyValue->key);
-        ogs_free(localKeyValue->value);
-        ogs_free(localKeyValue);
+    if (scp_info->scp_prefix) {
+        ogs_free(scp_info->scp_prefix);
+        scp_info->scp_prefix = NULL;
     }
-    OpenAPI_list_free(scp_info->scp_ports);
-    OpenAPI_list_for_each(scp_info->address_domains, node) {
-        ogs_free(node->data);
+    if (scp_info->scp_ports) {
+        OpenAPI_list_for_each(scp_info->scp_ports, node) {
+            OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*)node->data;
+            ogs_free(localKeyValue->key);
+            ogs_free(localKeyValue->value);
+            OpenAPI_map_free(localKeyValue);
+        }
+        OpenAPI_list_free(scp_info->scp_ports);
+        scp_info->scp_ports = NULL;
     }
-    OpenAPI_list_free(scp_info->address_domains);
-    OpenAPI_list_for_each(scp_info->ipv4_addresses, node) {
-        ogs_free(node->data);
+    if (scp_info->address_domains) {
+        OpenAPI_list_for_each(scp_info->address_domains, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->address_domains);
+        scp_info->address_domains = NULL;
     }
-    OpenAPI_list_free(scp_info->ipv4_addresses);
-    OpenAPI_list_for_each(scp_info->ipv6_prefixes, node) {
-        ogs_free(node->data);
+    if (scp_info->ipv4_addresses) {
+        OpenAPI_list_for_each(scp_info->ipv4_addresses, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->ipv4_addresses);
+        scp_info->ipv4_addresses = NULL;
     }
-    OpenAPI_list_free(scp_info->ipv6_prefixes);
-    OpenAPI_list_for_each(scp_info->ipv4_addr_ranges, node) {
-        OpenAPI_ipv4_address_range_free(node->data);
+    if (scp_info->ipv6_prefixes) {
+        OpenAPI_list_for_each(scp_info->ipv6_prefixes, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->ipv6_prefixes);
+        scp_info->ipv6_prefixes = NULL;
     }
-    OpenAPI_list_free(scp_info->ipv4_addr_ranges);
-    OpenAPI_list_for_each(scp_info->ipv6_prefix_ranges, node) {
-        OpenAPI_ipv6_prefix_range_free(node->data);
+    if (scp_info->ipv4_addr_ranges) {
+        OpenAPI_list_for_each(scp_info->ipv4_addr_ranges, node) {
+            OpenAPI_ipv4_address_range_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->ipv4_addr_ranges);
+        scp_info->ipv4_addr_ranges = NULL;
     }
-    OpenAPI_list_free(scp_info->ipv6_prefix_ranges);
-    OpenAPI_list_for_each(scp_info->served_nf_set_id_list, node) {
-        ogs_free(node->data);
+    if (scp_info->ipv6_prefix_ranges) {
+        OpenAPI_list_for_each(scp_info->ipv6_prefix_ranges, node) {
+            OpenAPI_ipv6_prefix_range_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->ipv6_prefix_ranges);
+        scp_info->ipv6_prefix_ranges = NULL;
     }
-    OpenAPI_list_free(scp_info->served_nf_set_id_list);
-    OpenAPI_list_for_each(scp_info->remote_plmn_list, node) {
-        OpenAPI_plmn_id_free(node->data);
+    if (scp_info->served_nf_set_id_list) {
+        OpenAPI_list_for_each(scp_info->served_nf_set_id_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->served_nf_set_id_list);
+        scp_info->served_nf_set_id_list = NULL;
     }
-    OpenAPI_list_free(scp_info->remote_plmn_list);
+    if (scp_info->remote_plmn_list) {
+        OpenAPI_list_for_each(scp_info->remote_plmn_list, node) {
+            OpenAPI_plmn_id_free(node->data);
+        }
+        OpenAPI_list_free(scp_info->remote_plmn_list);
+        scp_info->remote_plmn_list = NULL;
+    }
     ogs_free(scp_info);
 }
 
@@ -271,7 +301,7 @@ cJSON *OpenAPI_scp_info_convertToJSON(OpenAPI_scp_info_t *scp_info)
     }
     }
 
-    if (scp_info->ip_reachability) {
+    if (scp_info->ip_reachability != OpenAPI_ip_reachability_NULL) {
     if (cJSON_AddStringToObject(item, "ipReachability", OpenAPI_ip_reachability_ToString(scp_info->ip_reachability)) == NULL) {
         ogs_error("OpenAPI_scp_info_convertToJSON() failed [ip_reachability]");
         goto end;
@@ -285,233 +315,238 @@ end:
 OpenAPI_scp_info_t *OpenAPI_scp_info_parseFromJSON(cJSON *scp_infoJSON)
 {
     OpenAPI_scp_info_t *scp_info_local_var = NULL;
-    cJSON *scp_domain_info_list = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "scpDomainInfoList");
-
-    OpenAPI_list_t *scp_domain_info_listList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *scp_domain_info_list = NULL;
+    OpenAPI_list_t *scp_domain_info_listList = NULL;
+    cJSON *scp_prefix = NULL;
+    cJSON *scp_ports = NULL;
+    OpenAPI_list_t *scp_portsList = NULL;
+    cJSON *address_domains = NULL;
+    OpenAPI_list_t *address_domainsList = NULL;
+    cJSON *ipv4_addresses = NULL;
+    OpenAPI_list_t *ipv4_addressesList = NULL;
+    cJSON *ipv6_prefixes = NULL;
+    OpenAPI_list_t *ipv6_prefixesList = NULL;
+    cJSON *ipv4_addr_ranges = NULL;
+    OpenAPI_list_t *ipv4_addr_rangesList = NULL;
+    cJSON *ipv6_prefix_ranges = NULL;
+    OpenAPI_list_t *ipv6_prefix_rangesList = NULL;
+    cJSON *served_nf_set_id_list = NULL;
+    OpenAPI_list_t *served_nf_set_id_listList = NULL;
+    cJSON *remote_plmn_list = NULL;
+    OpenAPI_list_t *remote_plmn_listList = NULL;
+    cJSON *ip_reachability = NULL;
+    OpenAPI_ip_reachability_e ip_reachabilityVariable = 0;
+    scp_domain_info_list = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "scpDomainInfoList");
     if (scp_domain_info_list) {
-    cJSON *scp_domain_info_list_local_map;
-    if (!cJSON_IsObject(scp_domain_info_list)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [scp_domain_info_list]");
-        goto end;
-    }
-    scp_domain_info_listList = OpenAPI_list_create();
-    OpenAPI_map_t *localMapKeyPair = NULL;
-    cJSON_ArrayForEach(scp_domain_info_list_local_map, scp_domain_info_list) {
-        cJSON *localMapObject = scp_domain_info_list_local_map;
-        if (cJSON_IsObject(localMapObject)) {
-            localMapKeyPair = OpenAPI_map_create(
-                ogs_strdup(localMapObject->string), OpenAPI_scp_domain_info_parseFromJSON(localMapObject));
-        } else if (cJSON_IsNull(localMapObject)) {
-            localMapKeyPair = OpenAPI_map_create(ogs_strdup(localMapObject->string), NULL);
-        } else {
-            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [inner]");
+        cJSON *scp_domain_info_list_local_map = NULL;
+        if (!cJSON_IsObject(scp_domain_info_list) && !cJSON_IsNull(scp_domain_info_list)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [scp_domain_info_list]");
             goto end;
         }
-        OpenAPI_list_add(scp_domain_info_listList, localMapKeyPair);
-    }
+        if (cJSON_IsObject(scp_domain_info_list)) {
+            scp_domain_info_listList = OpenAPI_list_create();
+            OpenAPI_map_t *localMapKeyPair = NULL;
+            cJSON_ArrayForEach(scp_domain_info_list_local_map, scp_domain_info_list) {
+                cJSON *localMapObject = scp_domain_info_list_local_map;
+                if (cJSON_IsObject(localMapObject)) {
+                    localMapKeyPair = OpenAPI_map_create(
+                        ogs_strdup(localMapObject->string), OpenAPI_scp_domain_info_parseFromJSON(localMapObject));
+                } else if (cJSON_IsNull(localMapObject)) {
+                    localMapKeyPair = OpenAPI_map_create(ogs_strdup(localMapObject->string), NULL);
+                } else {
+                    ogs_error("OpenAPI_scp_info_parseFromJSON() failed [inner]");
+                    goto end;
+                }
+                OpenAPI_list_add(scp_domain_info_listList, localMapKeyPair);
+            }
+        }
     }
 
-    cJSON *scp_prefix = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "scpPrefix");
-
+    scp_prefix = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "scpPrefix");
     if (scp_prefix) {
-    if (!cJSON_IsString(scp_prefix)) {
+    if (!cJSON_IsString(scp_prefix) && !cJSON_IsNull(scp_prefix)) {
         ogs_error("OpenAPI_scp_info_parseFromJSON() failed [scp_prefix]");
         goto end;
     }
     }
 
-    cJSON *scp_ports = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "scpPorts");
-
-    OpenAPI_list_t *scp_portsList;
+    scp_ports = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "scpPorts");
     if (scp_ports) {
-    cJSON *scp_ports_local_map;
-    if (!cJSON_IsObject(scp_ports)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [scp_ports]");
-        goto end;
-    }
-    scp_portsList = OpenAPI_list_create();
-    OpenAPI_map_t *localMapKeyPair = NULL;
-    cJSON_ArrayForEach(scp_ports_local_map, scp_ports) {
-        cJSON *localMapObject = scp_ports_local_map;
-        if (!cJSON_IsNumber(localMapObject)) {
-            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [inner]");
+        cJSON *scp_ports_local_map = NULL;
+        if (!cJSON_IsObject(scp_ports) && !cJSON_IsNull(scp_ports)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [scp_ports]");
             goto end;
         }
-        localMapKeyPair = OpenAPI_map_create(ogs_strdup(localMapObject->string),&localMapObject->valuedouble );
-        OpenAPI_list_add(scp_portsList, localMapKeyPair);
-    }
+        if (cJSON_IsObject(scp_ports)) {
+            scp_portsList = OpenAPI_list_create();
+            OpenAPI_map_t *localMapKeyPair = NULL;
+            cJSON_ArrayForEach(scp_ports_local_map, scp_ports) {
+                cJSON *localMapObject = scp_ports_local_map;
+                if (!cJSON_IsNumber(localMapObject)) {
+                    ogs_error("OpenAPI_scp_info_parseFromJSON() failed [inner]");
+                    goto end;
+                }
+                localMapKeyPair = OpenAPI_map_create(ogs_strdup(localMapObject->string),&localMapObject->valuedouble );
+                OpenAPI_list_add(scp_portsList, localMapKeyPair);
+            }
+        }
     }
 
-    cJSON *address_domains = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "addressDomains");
-
-    OpenAPI_list_t *address_domainsList;
+    address_domains = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "addressDomains");
     if (address_domains) {
-    cJSON *address_domains_local;
-    if (!cJSON_IsArray(address_domains)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [address_domains]");
-        goto end;
-    }
-    address_domainsList = OpenAPI_list_create();
+        cJSON *address_domains_local;
+        if (!cJSON_IsArray(address_domains)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [address_domains]");
+            goto end;
+        }
+        address_domainsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(address_domains_local, address_domains) {
-    if (!cJSON_IsString(address_domains_local)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [address_domains]");
-        goto end;
-    }
-    OpenAPI_list_add(address_domainsList, ogs_strdup(address_domains_local->valuestring));
-    }
+        cJSON_ArrayForEach(address_domains_local, address_domains) {
+        if (!cJSON_IsString(address_domains_local)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [address_domains]");
+            goto end;
+        }
+        OpenAPI_list_add(address_domainsList, ogs_strdup(address_domains_local->valuestring));
+        }
     }
 
-    cJSON *ipv4_addresses = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv4Addresses");
-
-    OpenAPI_list_t *ipv4_addressesList;
+    ipv4_addresses = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv4Addresses");
     if (ipv4_addresses) {
-    cJSON *ipv4_addresses_local;
-    if (!cJSON_IsArray(ipv4_addresses)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addresses]");
-        goto end;
-    }
-    ipv4_addressesList = OpenAPI_list_create();
+        cJSON *ipv4_addresses_local;
+        if (!cJSON_IsArray(ipv4_addresses)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addresses]");
+            goto end;
+        }
+        ipv4_addressesList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ipv4_addresses_local, ipv4_addresses) {
-    if (!cJSON_IsString(ipv4_addresses_local)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addresses]");
-        goto end;
-    }
-    OpenAPI_list_add(ipv4_addressesList, ogs_strdup(ipv4_addresses_local->valuestring));
-    }
+        cJSON_ArrayForEach(ipv4_addresses_local, ipv4_addresses) {
+        if (!cJSON_IsString(ipv4_addresses_local)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addresses]");
+            goto end;
+        }
+        OpenAPI_list_add(ipv4_addressesList, ogs_strdup(ipv4_addresses_local->valuestring));
+        }
     }
 
-    cJSON *ipv6_prefixes = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv6Prefixes");
-
-    OpenAPI_list_t *ipv6_prefixesList;
+    ipv6_prefixes = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv6Prefixes");
     if (ipv6_prefixes) {
-    cJSON *ipv6_prefixes_local;
-    if (!cJSON_IsArray(ipv6_prefixes)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefixes]");
-        goto end;
-    }
-    ipv6_prefixesList = OpenAPI_list_create();
+        cJSON *ipv6_prefixes_local;
+        if (!cJSON_IsArray(ipv6_prefixes)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefixes]");
+            goto end;
+        }
+        ipv6_prefixesList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ipv6_prefixes_local, ipv6_prefixes) {
-    if (!cJSON_IsString(ipv6_prefixes_local)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefixes]");
-        goto end;
-    }
-    OpenAPI_list_add(ipv6_prefixesList, ogs_strdup(ipv6_prefixes_local->valuestring));
-    }
+        cJSON_ArrayForEach(ipv6_prefixes_local, ipv6_prefixes) {
+        if (!cJSON_IsString(ipv6_prefixes_local)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefixes]");
+            goto end;
+        }
+        OpenAPI_list_add(ipv6_prefixesList, ogs_strdup(ipv6_prefixes_local->valuestring));
+        }
     }
 
-    cJSON *ipv4_addr_ranges = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv4AddrRanges");
-
-    OpenAPI_list_t *ipv4_addr_rangesList;
+    ipv4_addr_ranges = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv4AddrRanges");
     if (ipv4_addr_ranges) {
-    cJSON *ipv4_addr_ranges_local_nonprimitive;
-    if (!cJSON_IsArray(ipv4_addr_ranges)){
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addr_ranges]");
-        goto end;
-    }
-
-    ipv4_addr_rangesList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(ipv4_addr_ranges_local_nonprimitive, ipv4_addr_ranges ) {
-        if (!cJSON_IsObject(ipv4_addr_ranges_local_nonprimitive)) {
+        cJSON *ipv4_addr_ranges_local_nonprimitive;
+        if (!cJSON_IsArray(ipv4_addr_ranges)){
             ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addr_ranges]");
             goto end;
         }
-        OpenAPI_ipv4_address_range_t *ipv4_addr_rangesItem = OpenAPI_ipv4_address_range_parseFromJSON(ipv4_addr_ranges_local_nonprimitive);
 
-        if (!ipv4_addr_rangesItem) {
-            ogs_error("No ipv4_addr_rangesItem");
-            OpenAPI_list_free(ipv4_addr_rangesList);
-            goto end;
+        ipv4_addr_rangesList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(ipv4_addr_ranges_local_nonprimitive, ipv4_addr_ranges ) {
+            if (!cJSON_IsObject(ipv4_addr_ranges_local_nonprimitive)) {
+                ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv4_addr_ranges]");
+                goto end;
+            }
+            OpenAPI_ipv4_address_range_t *ipv4_addr_rangesItem = OpenAPI_ipv4_address_range_parseFromJSON(ipv4_addr_ranges_local_nonprimitive);
+
+            if (!ipv4_addr_rangesItem) {
+                ogs_error("No ipv4_addr_rangesItem");
+                OpenAPI_list_free(ipv4_addr_rangesList);
+                goto end;
+            }
+
+            OpenAPI_list_add(ipv4_addr_rangesList, ipv4_addr_rangesItem);
         }
-
-        OpenAPI_list_add(ipv4_addr_rangesList, ipv4_addr_rangesItem);
-    }
     }
 
-    cJSON *ipv6_prefix_ranges = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv6PrefixRanges");
-
-    OpenAPI_list_t *ipv6_prefix_rangesList;
+    ipv6_prefix_ranges = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipv6PrefixRanges");
     if (ipv6_prefix_ranges) {
-    cJSON *ipv6_prefix_ranges_local_nonprimitive;
-    if (!cJSON_IsArray(ipv6_prefix_ranges)){
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefix_ranges]");
-        goto end;
-    }
-
-    ipv6_prefix_rangesList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(ipv6_prefix_ranges_local_nonprimitive, ipv6_prefix_ranges ) {
-        if (!cJSON_IsObject(ipv6_prefix_ranges_local_nonprimitive)) {
+        cJSON *ipv6_prefix_ranges_local_nonprimitive;
+        if (!cJSON_IsArray(ipv6_prefix_ranges)){
             ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefix_ranges]");
             goto end;
         }
-        OpenAPI_ipv6_prefix_range_t *ipv6_prefix_rangesItem = OpenAPI_ipv6_prefix_range_parseFromJSON(ipv6_prefix_ranges_local_nonprimitive);
 
-        if (!ipv6_prefix_rangesItem) {
-            ogs_error("No ipv6_prefix_rangesItem");
-            OpenAPI_list_free(ipv6_prefix_rangesList);
+        ipv6_prefix_rangesList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(ipv6_prefix_ranges_local_nonprimitive, ipv6_prefix_ranges ) {
+            if (!cJSON_IsObject(ipv6_prefix_ranges_local_nonprimitive)) {
+                ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ipv6_prefix_ranges]");
+                goto end;
+            }
+            OpenAPI_ipv6_prefix_range_t *ipv6_prefix_rangesItem = OpenAPI_ipv6_prefix_range_parseFromJSON(ipv6_prefix_ranges_local_nonprimitive);
+
+            if (!ipv6_prefix_rangesItem) {
+                ogs_error("No ipv6_prefix_rangesItem");
+                OpenAPI_list_free(ipv6_prefix_rangesList);
+                goto end;
+            }
+
+            OpenAPI_list_add(ipv6_prefix_rangesList, ipv6_prefix_rangesItem);
+        }
+    }
+
+    served_nf_set_id_list = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "servedNfSetIdList");
+    if (served_nf_set_id_list) {
+        cJSON *served_nf_set_id_list_local;
+        if (!cJSON_IsArray(served_nf_set_id_list)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [served_nf_set_id_list]");
             goto end;
         }
+        served_nf_set_id_listList = OpenAPI_list_create();
 
-        OpenAPI_list_add(ipv6_prefix_rangesList, ipv6_prefix_rangesItem);
-    }
-    }
-
-    cJSON *served_nf_set_id_list = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "servedNfSetIdList");
-
-    OpenAPI_list_t *served_nf_set_id_listList;
-    if (served_nf_set_id_list) {
-    cJSON *served_nf_set_id_list_local;
-    if (!cJSON_IsArray(served_nf_set_id_list)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [served_nf_set_id_list]");
-        goto end;
-    }
-    served_nf_set_id_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(served_nf_set_id_list_local, served_nf_set_id_list) {
-    if (!cJSON_IsString(served_nf_set_id_list_local)) {
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [served_nf_set_id_list]");
-        goto end;
-    }
-    OpenAPI_list_add(served_nf_set_id_listList, ogs_strdup(served_nf_set_id_list_local->valuestring));
-    }
+        cJSON_ArrayForEach(served_nf_set_id_list_local, served_nf_set_id_list) {
+        if (!cJSON_IsString(served_nf_set_id_list_local)) {
+            ogs_error("OpenAPI_scp_info_parseFromJSON() failed [served_nf_set_id_list]");
+            goto end;
+        }
+        OpenAPI_list_add(served_nf_set_id_listList, ogs_strdup(served_nf_set_id_list_local->valuestring));
+        }
     }
 
-    cJSON *remote_plmn_list = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "remotePlmnList");
-
-    OpenAPI_list_t *remote_plmn_listList;
+    remote_plmn_list = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "remotePlmnList");
     if (remote_plmn_list) {
-    cJSON *remote_plmn_list_local_nonprimitive;
-    if (!cJSON_IsArray(remote_plmn_list)){
-        ogs_error("OpenAPI_scp_info_parseFromJSON() failed [remote_plmn_list]");
-        goto end;
-    }
-
-    remote_plmn_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(remote_plmn_list_local_nonprimitive, remote_plmn_list ) {
-        if (!cJSON_IsObject(remote_plmn_list_local_nonprimitive)) {
+        cJSON *remote_plmn_list_local_nonprimitive;
+        if (!cJSON_IsArray(remote_plmn_list)){
             ogs_error("OpenAPI_scp_info_parseFromJSON() failed [remote_plmn_list]");
             goto end;
         }
-        OpenAPI_plmn_id_t *remote_plmn_listItem = OpenAPI_plmn_id_parseFromJSON(remote_plmn_list_local_nonprimitive);
 
-        if (!remote_plmn_listItem) {
-            ogs_error("No remote_plmn_listItem");
-            OpenAPI_list_free(remote_plmn_listList);
-            goto end;
+        remote_plmn_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(remote_plmn_list_local_nonprimitive, remote_plmn_list ) {
+            if (!cJSON_IsObject(remote_plmn_list_local_nonprimitive)) {
+                ogs_error("OpenAPI_scp_info_parseFromJSON() failed [remote_plmn_list]");
+                goto end;
+            }
+            OpenAPI_plmn_id_t *remote_plmn_listItem = OpenAPI_plmn_id_parseFromJSON(remote_plmn_list_local_nonprimitive);
+
+            if (!remote_plmn_listItem) {
+                ogs_error("No remote_plmn_listItem");
+                OpenAPI_list_free(remote_plmn_listList);
+                goto end;
+            }
+
+            OpenAPI_list_add(remote_plmn_listList, remote_plmn_listItem);
         }
-
-        OpenAPI_list_add(remote_plmn_listList, remote_plmn_listItem);
-    }
     }
 
-    cJSON *ip_reachability = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipReachability");
-
-    OpenAPI_ip_reachability_e ip_reachabilityVariable;
+    ip_reachability = cJSON_GetObjectItemCaseSensitive(scp_infoJSON, "ipReachability");
     if (ip_reachability) {
     if (!cJSON_IsString(ip_reachability)) {
         ogs_error("OpenAPI_scp_info_parseFromJSON() failed [ip_reachability]");
@@ -522,7 +557,7 @@ OpenAPI_scp_info_t *OpenAPI_scp_info_parseFromJSON(cJSON *scp_infoJSON)
 
     scp_info_local_var = OpenAPI_scp_info_create (
         scp_domain_info_list ? scp_domain_info_listList : NULL,
-        scp_prefix ? ogs_strdup(scp_prefix->valuestring) : NULL,
+        scp_prefix && !cJSON_IsNull(scp_prefix) ? ogs_strdup(scp_prefix->valuestring) : NULL,
         scp_ports ? scp_portsList : NULL,
         address_domains ? address_domainsList : NULL,
         ipv4_addresses ? ipv4_addressesList : NULL,
@@ -536,6 +571,75 @@ OpenAPI_scp_info_t *OpenAPI_scp_info_parseFromJSON(cJSON *scp_infoJSON)
 
     return scp_info_local_var;
 end:
+    if (scp_domain_info_listList) {
+        OpenAPI_list_for_each(scp_domain_info_listList, node) {
+            OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*) node->data;
+            ogs_free(localKeyValue->key);
+            ogs_free(localKeyValue->value);
+            OpenAPI_map_free(localKeyValue);
+        }
+        OpenAPI_list_free(scp_domain_info_listList);
+        scp_domain_info_listList = NULL;
+    }
+    if (scp_portsList) {
+        OpenAPI_list_for_each(scp_portsList, node) {
+            OpenAPI_map_t *localKeyValue = (OpenAPI_map_t*) node->data;
+            ogs_free(localKeyValue->key);
+            ogs_free(localKeyValue->value);
+            OpenAPI_map_free(localKeyValue);
+        }
+        OpenAPI_list_free(scp_portsList);
+        scp_portsList = NULL;
+    }
+    if (address_domainsList) {
+        OpenAPI_list_for_each(address_domainsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(address_domainsList);
+        address_domainsList = NULL;
+    }
+    if (ipv4_addressesList) {
+        OpenAPI_list_for_each(ipv4_addressesList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ipv4_addressesList);
+        ipv4_addressesList = NULL;
+    }
+    if (ipv6_prefixesList) {
+        OpenAPI_list_for_each(ipv6_prefixesList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ipv6_prefixesList);
+        ipv6_prefixesList = NULL;
+    }
+    if (ipv4_addr_rangesList) {
+        OpenAPI_list_for_each(ipv4_addr_rangesList, node) {
+            OpenAPI_ipv4_address_range_free(node->data);
+        }
+        OpenAPI_list_free(ipv4_addr_rangesList);
+        ipv4_addr_rangesList = NULL;
+    }
+    if (ipv6_prefix_rangesList) {
+        OpenAPI_list_for_each(ipv6_prefix_rangesList, node) {
+            OpenAPI_ipv6_prefix_range_free(node->data);
+        }
+        OpenAPI_list_free(ipv6_prefix_rangesList);
+        ipv6_prefix_rangesList = NULL;
+    }
+    if (served_nf_set_id_listList) {
+        OpenAPI_list_for_each(served_nf_set_id_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(served_nf_set_id_listList);
+        served_nf_set_id_listList = NULL;
+    }
+    if (remote_plmn_listList) {
+        OpenAPI_list_for_each(remote_plmn_listList, node) {
+            OpenAPI_plmn_id_free(node->data);
+        }
+        OpenAPI_list_free(remote_plmn_listList);
+        remote_plmn_listList = NULL;
+    }
     return NULL;
 }
 

@@ -40,6 +40,7 @@ end:
 OpenAPI_reachability_for_sms_configuration_t *OpenAPI_reachability_for_sms_configuration_parseFromJSON(cJSON *reachability_for_sms_configurationJSON)
 {
     OpenAPI_reachability_for_sms_configuration_t *reachability_for_sms_configuration_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     reachability_for_sms_configuration_local_var = OpenAPI_reachability_for_sms_configuration_create (
     );
 

@@ -24,10 +24,13 @@ void OpenAPI_flow_info_free(OpenAPI_flow_info_t *flow_info)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(flow_info->flow_descriptions, node) {
-        ogs_free(node->data);
+    if (flow_info->flow_descriptions) {
+        OpenAPI_list_for_each(flow_info->flow_descriptions, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(flow_info->flow_descriptions);
+        flow_info->flow_descriptions = NULL;
     }
-    OpenAPI_list_free(flow_info->flow_descriptions);
     ogs_free(flow_info);
 }
 
@@ -69,35 +72,36 @@ end:
 OpenAPI_flow_info_t *OpenAPI_flow_info_parseFromJSON(cJSON *flow_infoJSON)
 {
     OpenAPI_flow_info_t *flow_info_local_var = NULL;
-    cJSON *flow_id = cJSON_GetObjectItemCaseSensitive(flow_infoJSON, "flowId");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *flow_id = NULL;
+    cJSON *flow_descriptions = NULL;
+    OpenAPI_list_t *flow_descriptionsList = NULL;
+    flow_id = cJSON_GetObjectItemCaseSensitive(flow_infoJSON, "flowId");
     if (!flow_id) {
         ogs_error("OpenAPI_flow_info_parseFromJSON() failed [flow_id]");
         goto end;
     }
-
     if (!cJSON_IsNumber(flow_id)) {
         ogs_error("OpenAPI_flow_info_parseFromJSON() failed [flow_id]");
         goto end;
     }
 
-    cJSON *flow_descriptions = cJSON_GetObjectItemCaseSensitive(flow_infoJSON, "flowDescriptions");
-
-    OpenAPI_list_t *flow_descriptionsList;
+    flow_descriptions = cJSON_GetObjectItemCaseSensitive(flow_infoJSON, "flowDescriptions");
     if (flow_descriptions) {
-    cJSON *flow_descriptions_local;
-    if (!cJSON_IsArray(flow_descriptions)) {
-        ogs_error("OpenAPI_flow_info_parseFromJSON() failed [flow_descriptions]");
-        goto end;
-    }
-    flow_descriptionsList = OpenAPI_list_create();
+        cJSON *flow_descriptions_local;
+        if (!cJSON_IsArray(flow_descriptions)) {
+            ogs_error("OpenAPI_flow_info_parseFromJSON() failed [flow_descriptions]");
+            goto end;
+        }
+        flow_descriptionsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(flow_descriptions_local, flow_descriptions) {
-    if (!cJSON_IsString(flow_descriptions_local)) {
-        ogs_error("OpenAPI_flow_info_parseFromJSON() failed [flow_descriptions]");
-        goto end;
-    }
-    OpenAPI_list_add(flow_descriptionsList, ogs_strdup(flow_descriptions_local->valuestring));
-    }
+        cJSON_ArrayForEach(flow_descriptions_local, flow_descriptions) {
+        if (!cJSON_IsString(flow_descriptions_local)) {
+            ogs_error("OpenAPI_flow_info_parseFromJSON() failed [flow_descriptions]");
+            goto end;
+        }
+        OpenAPI_list_add(flow_descriptionsList, ogs_strdup(flow_descriptions_local->valuestring));
+        }
     }
 
     flow_info_local_var = OpenAPI_flow_info_create (
@@ -108,6 +112,13 @@ OpenAPI_flow_info_t *OpenAPI_flow_info_parseFromJSON(cJSON *flow_infoJSON)
 
     return flow_info_local_var;
 end:
+    if (flow_descriptionsList) {
+        OpenAPI_list_for_each(flow_descriptionsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(flow_descriptionsList);
+        flow_descriptionsList = NULL;
+    }
     return NULL;
 }
 

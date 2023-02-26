@@ -40,6 +40,7 @@ end:
 OpenAPI_amf_event_type_t *OpenAPI_amf_event_type_parseFromJSON(cJSON *amf_event_typeJSON)
 {
     OpenAPI_amf_event_type_t *amf_event_type_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     amf_event_type_local_var = OpenAPI_amf_event_type_create (
     );
 

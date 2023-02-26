@@ -1,4 +1,6 @@
 
+### Ubuntu
+
 * To install JDK(Java)
 $ sudo apt install default-jdk
 
@@ -13,4 +15,20 @@ $ sudo npm install @openapitools/openapi-generator-cli -g
 
 $ Run generator
 $ sudo openapi-generator-cli version-manager set 6.4.0
+$ ./generator.sh
+
+
+### MacOSX
+
+* To install JDK(Java)
+$ brew install openjdk
+
+* To install Node.js
+$ brew install node
+
+* To install OpenAPI Geneator
+$ npm install @openapitools/openapi-generator-cli -g
+
+$ Run generator
+$ openapi-generator-cli version-manager set 6.4.0
 $ ./generator.sh

@@ -24,8 +24,14 @@ void OpenAPI_valid_time_period_1_free(OpenAPI_valid_time_period_1_t *valid_time_
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(valid_time_period_1->start_time);
-    ogs_free(valid_time_period_1->end_time);
+    if (valid_time_period_1->start_time) {
+        ogs_free(valid_time_period_1->start_time);
+        valid_time_period_1->start_time = NULL;
+    }
+    if (valid_time_period_1->end_time) {
+        ogs_free(valid_time_period_1->end_time);
+        valid_time_period_1->end_time = NULL;
+    }
     ogs_free(valid_time_period_1);
 }
 
@@ -60,27 +66,28 @@ end:
 OpenAPI_valid_time_period_1_t *OpenAPI_valid_time_period_1_parseFromJSON(cJSON *valid_time_period_1JSON)
 {
     OpenAPI_valid_time_period_1_t *valid_time_period_1_local_var = NULL;
-    cJSON *start_time = cJSON_GetObjectItemCaseSensitive(valid_time_period_1JSON, "startTime");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *start_time = NULL;
+    cJSON *end_time = NULL;
+    start_time = cJSON_GetObjectItemCaseSensitive(valid_time_period_1JSON, "startTime");
     if (start_time) {
-    if (!cJSON_IsString(start_time)) {
+    if (!cJSON_IsString(start_time) && !cJSON_IsNull(start_time)) {
         ogs_error("OpenAPI_valid_time_period_1_parseFromJSON() failed [start_time]");
         goto end;
     }
     }
 
-    cJSON *end_time = cJSON_GetObjectItemCaseSensitive(valid_time_period_1JSON, "endTime");
-
+    end_time = cJSON_GetObjectItemCaseSensitive(valid_time_period_1JSON, "endTime");
     if (end_time) {
-    if (!cJSON_IsString(end_time)) {
+    if (!cJSON_IsString(end_time) && !cJSON_IsNull(end_time)) {
         ogs_error("OpenAPI_valid_time_period_1_parseFromJSON() failed [end_time]");
         goto end;
     }
     }
 
     valid_time_period_1_local_var = OpenAPI_valid_time_period_1_create (
-        start_time ? ogs_strdup(start_time->valuestring) : NULL,
-        end_time ? ogs_strdup(end_time->valuestring) : NULL
+        start_time && !cJSON_IsNull(start_time) ? ogs_strdup(start_time->valuestring) : NULL,
+        end_time && !cJSON_IsNull(end_time) ? ogs_strdup(end_time->valuestring) : NULL
     );
 
     return valid_time_period_1_local_var;

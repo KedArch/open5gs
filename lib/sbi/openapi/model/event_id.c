@@ -40,6 +40,7 @@ end:
 OpenAPI_event_id_t *OpenAPI_event_id_parseFromJSON(cJSON *event_idJSON)
 {
     OpenAPI_event_id_t *event_id_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     event_id_local_var = OpenAPI_event_id_create (
     );
 

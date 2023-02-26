@@ -35,6 +35,10 @@ cJSON *OpenAPI_amf_dereg_info_convertToJSON(OpenAPI_amf_dereg_info_t *amf_dereg_
     }
 
     item = cJSON_CreateObject();
+    if (amf_dereg_info->dereg_reason == OpenAPI_deregistration_reason_NULL) {
+        ogs_error("OpenAPI_amf_dereg_info_convertToJSON() failed [dereg_reason]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "deregReason", OpenAPI_deregistration_reason_ToString(amf_dereg_info->dereg_reason)) == NULL) {
         ogs_error("OpenAPI_amf_dereg_info_convertToJSON() failed [dereg_reason]");
         goto end;
@@ -47,13 +51,14 @@ end:
 OpenAPI_amf_dereg_info_t *OpenAPI_amf_dereg_info_parseFromJSON(cJSON *amf_dereg_infoJSON)
 {
     OpenAPI_amf_dereg_info_t *amf_dereg_info_local_var = NULL;
-    cJSON *dereg_reason = cJSON_GetObjectItemCaseSensitive(amf_dereg_infoJSON, "deregReason");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *dereg_reason = NULL;
+    OpenAPI_deregistration_reason_e dereg_reasonVariable = 0;
+    dereg_reason = cJSON_GetObjectItemCaseSensitive(amf_dereg_infoJSON, "deregReason");
     if (!dereg_reason) {
         ogs_error("OpenAPI_amf_dereg_info_parseFromJSON() failed [dereg_reason]");
         goto end;
     }
-
-    OpenAPI_deregistration_reason_e dereg_reasonVariable;
     if (!cJSON_IsString(dereg_reason)) {
         ogs_error("OpenAPI_amf_dereg_info_parseFromJSON() failed [dereg_reason]");
         goto end;

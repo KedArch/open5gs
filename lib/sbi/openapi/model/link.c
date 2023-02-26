@@ -22,7 +22,10 @@ void OpenAPI_link_free(OpenAPI_link_t *link)
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(link->href);
+    if (link->href) {
+        ogs_free(link->href);
+        link->href = NULL;
+    }
     ogs_free(link);
 }
 
@@ -50,17 +53,18 @@ end:
 OpenAPI_link_t *OpenAPI_link_parseFromJSON(cJSON *linkJSON)
 {
     OpenAPI_link_t *link_local_var = NULL;
-    cJSON *href = cJSON_GetObjectItemCaseSensitive(linkJSON, "href");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *href = NULL;
+    href = cJSON_GetObjectItemCaseSensitive(linkJSON, "href");
     if (href) {
-    if (!cJSON_IsString(href)) {
+    if (!cJSON_IsString(href) && !cJSON_IsNull(href)) {
         ogs_error("OpenAPI_link_parseFromJSON() failed [href]");
         goto end;
     }
     }
 
     link_local_var = OpenAPI_link_create (
-        href ? ogs_strdup(href->valuestring) : NULL
+        href && !cJSON_IsNull(href) ? ogs_strdup(href->valuestring) : NULL
     );
 
     return link_local_var;

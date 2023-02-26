@@ -24,8 +24,14 @@ void OpenAPI_temporal_validity_free(OpenAPI_temporal_validity_t *temporal_validi
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(temporal_validity->start_time);
-    ogs_free(temporal_validity->stop_time);
+    if (temporal_validity->start_time) {
+        ogs_free(temporal_validity->start_time);
+        temporal_validity->start_time = NULL;
+    }
+    if (temporal_validity->stop_time) {
+        ogs_free(temporal_validity->stop_time);
+        temporal_validity->stop_time = NULL;
+    }
     ogs_free(temporal_validity);
 }
 
@@ -60,27 +66,28 @@ end:
 OpenAPI_temporal_validity_t *OpenAPI_temporal_validity_parseFromJSON(cJSON *temporal_validityJSON)
 {
     OpenAPI_temporal_validity_t *temporal_validity_local_var = NULL;
-    cJSON *start_time = cJSON_GetObjectItemCaseSensitive(temporal_validityJSON, "startTime");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *start_time = NULL;
+    cJSON *stop_time = NULL;
+    start_time = cJSON_GetObjectItemCaseSensitive(temporal_validityJSON, "startTime");
     if (start_time) {
-    if (!cJSON_IsString(start_time)) {
+    if (!cJSON_IsString(start_time) && !cJSON_IsNull(start_time)) {
         ogs_error("OpenAPI_temporal_validity_parseFromJSON() failed [start_time]");
         goto end;
     }
     }
 
-    cJSON *stop_time = cJSON_GetObjectItemCaseSensitive(temporal_validityJSON, "stopTime");
-
+    stop_time = cJSON_GetObjectItemCaseSensitive(temporal_validityJSON, "stopTime");
     if (stop_time) {
-    if (!cJSON_IsString(stop_time)) {
+    if (!cJSON_IsString(stop_time) && !cJSON_IsNull(stop_time)) {
         ogs_error("OpenAPI_temporal_validity_parseFromJSON() failed [stop_time]");
         goto end;
     }
     }
 
     temporal_validity_local_var = OpenAPI_temporal_validity_create (
-        start_time ? ogs_strdup(start_time->valuestring) : NULL,
-        stop_time ? ogs_strdup(stop_time->valuestring) : NULL
+        start_time && !cJSON_IsNull(start_time) ? ogs_strdup(start_time->valuestring) : NULL,
+        stop_time && !cJSON_IsNull(stop_time) ? ogs_strdup(stop_time->valuestring) : NULL
     );
 
     return temporal_validity_local_var;

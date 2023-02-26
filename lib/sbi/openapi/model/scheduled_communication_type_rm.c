@@ -40,6 +40,7 @@ end:
 OpenAPI_scheduled_communication_type_rm_t *OpenAPI_scheduled_communication_type_rm_parseFromJSON(cJSON *scheduled_communication_type_rmJSON)
 {
     OpenAPI_scheduled_communication_type_rm_t *scheduled_communication_type_rm_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     scheduled_communication_type_rm_local_var = OpenAPI_scheduled_communication_type_rm_create (
     );
 

@@ -40,6 +40,7 @@ end:
 OpenAPI_preemption_control_information_rm_t *OpenAPI_preemption_control_information_rm_parseFromJSON(cJSON *preemption_control_information_rmJSON)
 {
     OpenAPI_preemption_control_information_rm_t *preemption_control_information_rm_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     preemption_control_information_rm_local_var = OpenAPI_preemption_control_information_rm_create (
     );
 

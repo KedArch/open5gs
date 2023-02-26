@@ -40,6 +40,7 @@ end:
 OpenAPI_access_type_rm_t *OpenAPI_access_type_rm_parseFromJSON(cJSON *access_type_rmJSON)
 {
     OpenAPI_access_type_rm_t *access_type_rm_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     access_type_rm_local_var = OpenAPI_access_type_rm_create (
     );
 

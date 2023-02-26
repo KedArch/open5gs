@@ -40,6 +40,7 @@ end:
 OpenAPI_trigger_category_t *OpenAPI_trigger_category_parseFromJSON(cJSON *trigger_categoryJSON)
 {
     OpenAPI_trigger_category_t *trigger_category_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     trigger_category_local_var = OpenAPI_trigger_category_create (
     );
 

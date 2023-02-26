@@ -51,8 +51,9 @@ end:
 OpenAPI_loss_connectivity_cfg_t *OpenAPI_loss_connectivity_cfg_parseFromJSON(cJSON *loss_connectivity_cfgJSON)
 {
     OpenAPI_loss_connectivity_cfg_t *loss_connectivity_cfg_local_var = NULL;
-    cJSON *max_detection_time = cJSON_GetObjectItemCaseSensitive(loss_connectivity_cfgJSON, "maxDetectionTime");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *max_detection_time = NULL;
+    max_detection_time = cJSON_GetObjectItemCaseSensitive(loss_connectivity_cfgJSON, "maxDetectionTime");
     if (max_detection_time) {
     if (!cJSON_IsNumber(max_detection_time)) {
         ogs_error("OpenAPI_loss_connectivity_cfg_parseFromJSON() failed [max_detection_time]");

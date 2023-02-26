@@ -28,22 +28,34 @@ void OpenAPI_bsf_info_free(OpenAPI_bsf_info_t *bsf_info)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(bsf_info->dnn_list, node) {
-        ogs_free(node->data);
+    if (bsf_info->dnn_list) {
+        OpenAPI_list_for_each(bsf_info->dnn_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(bsf_info->dnn_list);
+        bsf_info->dnn_list = NULL;
     }
-    OpenAPI_list_free(bsf_info->dnn_list);
-    OpenAPI_list_for_each(bsf_info->ip_domain_list, node) {
-        ogs_free(node->data);
+    if (bsf_info->ip_domain_list) {
+        OpenAPI_list_for_each(bsf_info->ip_domain_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(bsf_info->ip_domain_list);
+        bsf_info->ip_domain_list = NULL;
     }
-    OpenAPI_list_free(bsf_info->ip_domain_list);
-    OpenAPI_list_for_each(bsf_info->ipv4_address_ranges, node) {
-        OpenAPI_ipv4_address_range_free(node->data);
+    if (bsf_info->ipv4_address_ranges) {
+        OpenAPI_list_for_each(bsf_info->ipv4_address_ranges, node) {
+            OpenAPI_ipv4_address_range_free(node->data);
+        }
+        OpenAPI_list_free(bsf_info->ipv4_address_ranges);
+        bsf_info->ipv4_address_ranges = NULL;
     }
-    OpenAPI_list_free(bsf_info->ipv4_address_ranges);
-    OpenAPI_list_for_each(bsf_info->ipv6_prefix_ranges, node) {
-        OpenAPI_ipv6_prefix_range_free(node->data);
+    if (bsf_info->ipv6_prefix_ranges) {
+        OpenAPI_list_for_each(bsf_info->ipv6_prefix_ranges, node) {
+            OpenAPI_ipv6_prefix_range_free(node->data);
+        }
+        OpenAPI_list_free(bsf_info->ipv6_prefix_ranges);
+        bsf_info->ipv6_prefix_ranges = NULL;
     }
-    OpenAPI_list_free(bsf_info->ipv6_prefix_ranges);
     ogs_free(bsf_info);
 }
 
@@ -136,102 +148,103 @@ end:
 OpenAPI_bsf_info_t *OpenAPI_bsf_info_parseFromJSON(cJSON *bsf_infoJSON)
 {
     OpenAPI_bsf_info_t *bsf_info_local_var = NULL;
-    cJSON *dnn_list = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "dnnList");
-
-    OpenAPI_list_t *dnn_listList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *dnn_list = NULL;
+    OpenAPI_list_t *dnn_listList = NULL;
+    cJSON *ip_domain_list = NULL;
+    OpenAPI_list_t *ip_domain_listList = NULL;
+    cJSON *ipv4_address_ranges = NULL;
+    OpenAPI_list_t *ipv4_address_rangesList = NULL;
+    cJSON *ipv6_prefix_ranges = NULL;
+    OpenAPI_list_t *ipv6_prefix_rangesList = NULL;
+    dnn_list = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "dnnList");
     if (dnn_list) {
-    cJSON *dnn_list_local;
-    if (!cJSON_IsArray(dnn_list)) {
-        ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [dnn_list]");
-        goto end;
-    }
-    dnn_listList = OpenAPI_list_create();
+        cJSON *dnn_list_local;
+        if (!cJSON_IsArray(dnn_list)) {
+            ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [dnn_list]");
+            goto end;
+        }
+        dnn_listList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(dnn_list_local, dnn_list) {
-    if (!cJSON_IsString(dnn_list_local)) {
-        ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [dnn_list]");
-        goto end;
-    }
-    OpenAPI_list_add(dnn_listList, ogs_strdup(dnn_list_local->valuestring));
-    }
+        cJSON_ArrayForEach(dnn_list_local, dnn_list) {
+        if (!cJSON_IsString(dnn_list_local)) {
+            ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [dnn_list]");
+            goto end;
+        }
+        OpenAPI_list_add(dnn_listList, ogs_strdup(dnn_list_local->valuestring));
+        }
     }
 
-    cJSON *ip_domain_list = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "ipDomainList");
-
-    OpenAPI_list_t *ip_domain_listList;
+    ip_domain_list = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "ipDomainList");
     if (ip_domain_list) {
-    cJSON *ip_domain_list_local;
-    if (!cJSON_IsArray(ip_domain_list)) {
-        ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ip_domain_list]");
-        goto end;
-    }
-    ip_domain_listList = OpenAPI_list_create();
+        cJSON *ip_domain_list_local;
+        if (!cJSON_IsArray(ip_domain_list)) {
+            ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ip_domain_list]");
+            goto end;
+        }
+        ip_domain_listList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ip_domain_list_local, ip_domain_list) {
-    if (!cJSON_IsString(ip_domain_list_local)) {
-        ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ip_domain_list]");
-        goto end;
-    }
-    OpenAPI_list_add(ip_domain_listList, ogs_strdup(ip_domain_list_local->valuestring));
-    }
+        cJSON_ArrayForEach(ip_domain_list_local, ip_domain_list) {
+        if (!cJSON_IsString(ip_domain_list_local)) {
+            ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ip_domain_list]");
+            goto end;
+        }
+        OpenAPI_list_add(ip_domain_listList, ogs_strdup(ip_domain_list_local->valuestring));
+        }
     }
 
-    cJSON *ipv4_address_ranges = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "ipv4AddressRanges");
-
-    OpenAPI_list_t *ipv4_address_rangesList;
+    ipv4_address_ranges = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "ipv4AddressRanges");
     if (ipv4_address_ranges) {
-    cJSON *ipv4_address_ranges_local_nonprimitive;
-    if (!cJSON_IsArray(ipv4_address_ranges)){
-        ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ipv4_address_ranges]");
-        goto end;
-    }
-
-    ipv4_address_rangesList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(ipv4_address_ranges_local_nonprimitive, ipv4_address_ranges ) {
-        if (!cJSON_IsObject(ipv4_address_ranges_local_nonprimitive)) {
+        cJSON *ipv4_address_ranges_local_nonprimitive;
+        if (!cJSON_IsArray(ipv4_address_ranges)){
             ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ipv4_address_ranges]");
             goto end;
         }
-        OpenAPI_ipv4_address_range_t *ipv4_address_rangesItem = OpenAPI_ipv4_address_range_parseFromJSON(ipv4_address_ranges_local_nonprimitive);
 
-        if (!ipv4_address_rangesItem) {
-            ogs_error("No ipv4_address_rangesItem");
-            OpenAPI_list_free(ipv4_address_rangesList);
-            goto end;
+        ipv4_address_rangesList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(ipv4_address_ranges_local_nonprimitive, ipv4_address_ranges ) {
+            if (!cJSON_IsObject(ipv4_address_ranges_local_nonprimitive)) {
+                ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ipv4_address_ranges]");
+                goto end;
+            }
+            OpenAPI_ipv4_address_range_t *ipv4_address_rangesItem = OpenAPI_ipv4_address_range_parseFromJSON(ipv4_address_ranges_local_nonprimitive);
+
+            if (!ipv4_address_rangesItem) {
+                ogs_error("No ipv4_address_rangesItem");
+                OpenAPI_list_free(ipv4_address_rangesList);
+                goto end;
+            }
+
+            OpenAPI_list_add(ipv4_address_rangesList, ipv4_address_rangesItem);
         }
-
-        OpenAPI_list_add(ipv4_address_rangesList, ipv4_address_rangesItem);
-    }
     }
 
-    cJSON *ipv6_prefix_ranges = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "ipv6PrefixRanges");
-
-    OpenAPI_list_t *ipv6_prefix_rangesList;
+    ipv6_prefix_ranges = cJSON_GetObjectItemCaseSensitive(bsf_infoJSON, "ipv6PrefixRanges");
     if (ipv6_prefix_ranges) {
-    cJSON *ipv6_prefix_ranges_local_nonprimitive;
-    if (!cJSON_IsArray(ipv6_prefix_ranges)){
-        ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ipv6_prefix_ranges]");
-        goto end;
-    }
-
-    ipv6_prefix_rangesList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(ipv6_prefix_ranges_local_nonprimitive, ipv6_prefix_ranges ) {
-        if (!cJSON_IsObject(ipv6_prefix_ranges_local_nonprimitive)) {
+        cJSON *ipv6_prefix_ranges_local_nonprimitive;
+        if (!cJSON_IsArray(ipv6_prefix_ranges)){
             ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ipv6_prefix_ranges]");
             goto end;
         }
-        OpenAPI_ipv6_prefix_range_t *ipv6_prefix_rangesItem = OpenAPI_ipv6_prefix_range_parseFromJSON(ipv6_prefix_ranges_local_nonprimitive);
 
-        if (!ipv6_prefix_rangesItem) {
-            ogs_error("No ipv6_prefix_rangesItem");
-            OpenAPI_list_free(ipv6_prefix_rangesList);
-            goto end;
+        ipv6_prefix_rangesList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(ipv6_prefix_ranges_local_nonprimitive, ipv6_prefix_ranges ) {
+            if (!cJSON_IsObject(ipv6_prefix_ranges_local_nonprimitive)) {
+                ogs_error("OpenAPI_bsf_info_parseFromJSON() failed [ipv6_prefix_ranges]");
+                goto end;
+            }
+            OpenAPI_ipv6_prefix_range_t *ipv6_prefix_rangesItem = OpenAPI_ipv6_prefix_range_parseFromJSON(ipv6_prefix_ranges_local_nonprimitive);
+
+            if (!ipv6_prefix_rangesItem) {
+                ogs_error("No ipv6_prefix_rangesItem");
+                OpenAPI_list_free(ipv6_prefix_rangesList);
+                goto end;
+            }
+
+            OpenAPI_list_add(ipv6_prefix_rangesList, ipv6_prefix_rangesItem);
         }
-
-        OpenAPI_list_add(ipv6_prefix_rangesList, ipv6_prefix_rangesItem);
-    }
     }
 
     bsf_info_local_var = OpenAPI_bsf_info_create (
@@ -243,6 +256,34 @@ OpenAPI_bsf_info_t *OpenAPI_bsf_info_parseFromJSON(cJSON *bsf_infoJSON)
 
     return bsf_info_local_var;
 end:
+    if (dnn_listList) {
+        OpenAPI_list_for_each(dnn_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(dnn_listList);
+        dnn_listList = NULL;
+    }
+    if (ip_domain_listList) {
+        OpenAPI_list_for_each(ip_domain_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ip_domain_listList);
+        ip_domain_listList = NULL;
+    }
+    if (ipv4_address_rangesList) {
+        OpenAPI_list_for_each(ipv4_address_rangesList, node) {
+            OpenAPI_ipv4_address_range_free(node->data);
+        }
+        OpenAPI_list_free(ipv4_address_rangesList);
+        ipv4_address_rangesList = NULL;
+    }
+    if (ipv6_prefix_rangesList) {
+        OpenAPI_list_for_each(ipv6_prefix_rangesList, node) {
+            OpenAPI_ipv6_prefix_range_free(node->data);
+        }
+        OpenAPI_list_free(ipv6_prefix_rangesList);
+        ipv6_prefix_rangesList = NULL;
+    }
     return NULL;
 }
 

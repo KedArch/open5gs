@@ -28,9 +28,18 @@ void OpenAPI_upu_data_free(OpenAPI_upu_data_t *upu_data)
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(upu_data->provisioning_time);
-    ogs_free(upu_data->upu_xmac_iue);
-    ogs_free(upu_data->upu_mac_iue);
+    if (upu_data->provisioning_time) {
+        ogs_free(upu_data->provisioning_time);
+        upu_data->provisioning_time = NULL;
+    }
+    if (upu_data->upu_xmac_iue) {
+        ogs_free(upu_data->upu_xmac_iue);
+        upu_data->upu_xmac_iue = NULL;
+    }
+    if (upu_data->upu_mac_iue) {
+        ogs_free(upu_data->upu_mac_iue);
+        upu_data->upu_mac_iue = NULL;
+    }
     ogs_free(upu_data);
 }
 
@@ -44,11 +53,19 @@ cJSON *OpenAPI_upu_data_convertToJSON(OpenAPI_upu_data_t *upu_data)
     }
 
     item = cJSON_CreateObject();
+    if (!upu_data->provisioning_time) {
+        ogs_error("OpenAPI_upu_data_convertToJSON() failed [provisioning_time]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "provisioningTime", upu_data->provisioning_time) == NULL) {
         ogs_error("OpenAPI_upu_data_convertToJSON() failed [provisioning_time]");
         goto end;
     }
 
+    if (upu_data->ue_update_status == OpenAPI_ue_update_status_NULL) {
+        ogs_error("OpenAPI_upu_data_convertToJSON() failed [ue_update_status]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "ueUpdateStatus", OpenAPI_ue_update_status_ToString(upu_data->ue_update_status)) == NULL) {
         ogs_error("OpenAPI_upu_data_convertToJSON() failed [ue_update_status]");
         goto end;
@@ -75,43 +92,44 @@ end:
 OpenAPI_upu_data_t *OpenAPI_upu_data_parseFromJSON(cJSON *upu_dataJSON)
 {
     OpenAPI_upu_data_t *upu_data_local_var = NULL;
-    cJSON *provisioning_time = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "provisioningTime");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *provisioning_time = NULL;
+    cJSON *ue_update_status = NULL;
+    OpenAPI_ue_update_status_e ue_update_statusVariable = 0;
+    cJSON *upu_xmac_iue = NULL;
+    cJSON *upu_mac_iue = NULL;
+    provisioning_time = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "provisioningTime");
     if (!provisioning_time) {
         ogs_error("OpenAPI_upu_data_parseFromJSON() failed [provisioning_time]");
         goto end;
     }
-
-    if (!cJSON_IsString(provisioning_time)) {
+    if (!cJSON_IsString(provisioning_time) && !cJSON_IsNull(provisioning_time)) {
         ogs_error("OpenAPI_upu_data_parseFromJSON() failed [provisioning_time]");
         goto end;
     }
 
-    cJSON *ue_update_status = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "ueUpdateStatus");
+    ue_update_status = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "ueUpdateStatus");
     if (!ue_update_status) {
         ogs_error("OpenAPI_upu_data_parseFromJSON() failed [ue_update_status]");
         goto end;
     }
-
-    OpenAPI_ue_update_status_e ue_update_statusVariable;
     if (!cJSON_IsString(ue_update_status)) {
         ogs_error("OpenAPI_upu_data_parseFromJSON() failed [ue_update_status]");
         goto end;
     }
     ue_update_statusVariable = OpenAPI_ue_update_status_FromString(ue_update_status->valuestring);
 
-    cJSON *upu_xmac_iue = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "upuXmacIue");
-
+    upu_xmac_iue = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "upuXmacIue");
     if (upu_xmac_iue) {
-    if (!cJSON_IsString(upu_xmac_iue)) {
+    if (!cJSON_IsString(upu_xmac_iue) && !cJSON_IsNull(upu_xmac_iue)) {
         ogs_error("OpenAPI_upu_data_parseFromJSON() failed [upu_xmac_iue]");
         goto end;
     }
     }
 
-    cJSON *upu_mac_iue = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "upuMacIue");
-
+    upu_mac_iue = cJSON_GetObjectItemCaseSensitive(upu_dataJSON, "upuMacIue");
     if (upu_mac_iue) {
-    if (!cJSON_IsString(upu_mac_iue)) {
+    if (!cJSON_IsString(upu_mac_iue) && !cJSON_IsNull(upu_mac_iue)) {
         ogs_error("OpenAPI_upu_data_parseFromJSON() failed [upu_mac_iue]");
         goto end;
     }
@@ -120,8 +138,8 @@ OpenAPI_upu_data_t *OpenAPI_upu_data_parseFromJSON(cJSON *upu_dataJSON)
     upu_data_local_var = OpenAPI_upu_data_create (
         ogs_strdup(provisioning_time->valuestring),
         ue_update_statusVariable,
-        upu_xmac_iue ? ogs_strdup(upu_xmac_iue->valuestring) : NULL,
-        upu_mac_iue ? ogs_strdup(upu_mac_iue->valuestring) : NULL
+        upu_xmac_iue && !cJSON_IsNull(upu_xmac_iue) ? ogs_strdup(upu_xmac_iue->valuestring) : NULL,
+        upu_mac_iue && !cJSON_IsNull(upu_mac_iue) ? ogs_strdup(upu_mac_iue->valuestring) : NULL
     );
 
     return upu_data_local_var;

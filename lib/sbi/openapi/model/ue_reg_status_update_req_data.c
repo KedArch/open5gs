@@ -30,14 +30,20 @@ void OpenAPI_ue_reg_status_update_req_data_free(OpenAPI_ue_reg_status_update_req
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(ue_reg_status_update_req_data->to_release_session_list, node) {
-        ogs_free(node->data);
+    if (ue_reg_status_update_req_data->to_release_session_list) {
+        OpenAPI_list_for_each(ue_reg_status_update_req_data->to_release_session_list, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ue_reg_status_update_req_data->to_release_session_list);
+        ue_reg_status_update_req_data->to_release_session_list = NULL;
     }
-    OpenAPI_list_free(ue_reg_status_update_req_data->to_release_session_list);
-    OpenAPI_list_for_each(ue_reg_status_update_req_data->smf_change_info_list, node) {
-        OpenAPI_smf_change_info_free(node->data);
+    if (ue_reg_status_update_req_data->smf_change_info_list) {
+        OpenAPI_list_for_each(ue_reg_status_update_req_data->smf_change_info_list, node) {
+            OpenAPI_smf_change_info_free(node->data);
+        }
+        OpenAPI_list_free(ue_reg_status_update_req_data->smf_change_info_list);
+        ue_reg_status_update_req_data->smf_change_info_list = NULL;
     }
-    OpenAPI_list_free(ue_reg_status_update_req_data->smf_change_info_list);
     ogs_free(ue_reg_status_update_req_data);
 }
 
@@ -51,6 +57,10 @@ cJSON *OpenAPI_ue_reg_status_update_req_data_convertToJSON(OpenAPI_ue_reg_status
     }
 
     item = cJSON_CreateObject();
+    if (ue_reg_status_update_req_data->transfer_status == OpenAPI_ue_context_transfer_status_NULL) {
+        ogs_error("OpenAPI_ue_reg_status_update_req_data_convertToJSON() failed [transfer_status]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "transferStatus", OpenAPI_ue_context_transfer_status_ToString(ue_reg_status_update_req_data->transfer_status)) == NULL) {
         ogs_error("OpenAPI_ue_reg_status_update_req_data_convertToJSON() failed [transfer_status]");
         goto end;
@@ -106,41 +116,50 @@ end:
 OpenAPI_ue_reg_status_update_req_data_t *OpenAPI_ue_reg_status_update_req_data_parseFromJSON(cJSON *ue_reg_status_update_req_dataJSON)
 {
     OpenAPI_ue_reg_status_update_req_data_t *ue_reg_status_update_req_data_local_var = NULL;
-    cJSON *transfer_status = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "transferStatus");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *transfer_status = NULL;
+    OpenAPI_ue_context_transfer_status_e transfer_statusVariable = 0;
+    cJSON *to_release_session_list = NULL;
+    OpenAPI_list_t *to_release_session_listList = NULL;
+    cJSON *pcf_reselected_ind = NULL;
+    cJSON *smf_change_info_list = NULL;
+    OpenAPI_list_t *smf_change_info_listList = NULL;
+    transfer_status = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "transferStatus");
     if (!transfer_status) {
         ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [transfer_status]");
         goto end;
     }
-
-    OpenAPI_ue_context_transfer_status_e transfer_statusVariable;
     if (!cJSON_IsString(transfer_status)) {
         ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [transfer_status]");
         goto end;
     }
     transfer_statusVariable = OpenAPI_ue_context_transfer_status_FromString(transfer_status->valuestring);
 
-    cJSON *to_release_session_list = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "toReleaseSessionList");
-
-    OpenAPI_list_t *to_release_session_listList;
+    to_release_session_list = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "toReleaseSessionList");
     if (to_release_session_list) {
-    cJSON *to_release_session_list_local;
-    if (!cJSON_IsArray(to_release_session_list)) {
-        ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [to_release_session_list]");
-        goto end;
-    }
-    to_release_session_listList = OpenAPI_list_create();
+        cJSON *to_release_session_list_local;
+        if (!cJSON_IsArray(to_release_session_list)) {
+            ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [to_release_session_list]");
+            goto end;
+        }
+        to_release_session_listList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(to_release_session_list_local, to_release_session_list) {
-    if (!cJSON_IsNumber(to_release_session_list_local)) {
-        ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [to_release_session_list]");
-        goto end;
-    }
-    OpenAPI_list_add(to_release_session_listList, &to_release_session_list_local->valuedouble);
-    }
+        cJSON_ArrayForEach(to_release_session_list_local, to_release_session_list) {
+        if (!cJSON_IsNumber(to_release_session_list_local)) {
+            ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [to_release_session_list]");
+            goto end;
+        }
+        double *to_release_session_list_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!to_release_session_list_local_value) {
+            ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [to_release_session_list]");
+            goto end;
+        }
+        *to_release_session_list_local_value = to_release_session_list_local->valuedouble;
+        OpenAPI_list_add(to_release_session_listList, to_release_session_list_local_value);
+        }
     }
 
-    cJSON *pcf_reselected_ind = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "pcfReselectedInd");
-
+    pcf_reselected_ind = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "pcfReselectedInd");
     if (pcf_reselected_ind) {
     if (!cJSON_IsBool(pcf_reselected_ind)) {
         ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [pcf_reselected_ind]");
@@ -148,33 +167,31 @@ OpenAPI_ue_reg_status_update_req_data_t *OpenAPI_ue_reg_status_update_req_data_p
     }
     }
 
-    cJSON *smf_change_info_list = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "smfChangeInfoList");
-
-    OpenAPI_list_t *smf_change_info_listList;
+    smf_change_info_list = cJSON_GetObjectItemCaseSensitive(ue_reg_status_update_req_dataJSON, "smfChangeInfoList");
     if (smf_change_info_list) {
-    cJSON *smf_change_info_list_local_nonprimitive;
-    if (!cJSON_IsArray(smf_change_info_list)){
-        ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [smf_change_info_list]");
-        goto end;
-    }
-
-    smf_change_info_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(smf_change_info_list_local_nonprimitive, smf_change_info_list ) {
-        if (!cJSON_IsObject(smf_change_info_list_local_nonprimitive)) {
+        cJSON *smf_change_info_list_local_nonprimitive;
+        if (!cJSON_IsArray(smf_change_info_list)){
             ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [smf_change_info_list]");
             goto end;
         }
-        OpenAPI_smf_change_info_t *smf_change_info_listItem = OpenAPI_smf_change_info_parseFromJSON(smf_change_info_list_local_nonprimitive);
 
-        if (!smf_change_info_listItem) {
-            ogs_error("No smf_change_info_listItem");
-            OpenAPI_list_free(smf_change_info_listList);
-            goto end;
+        smf_change_info_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(smf_change_info_list_local_nonprimitive, smf_change_info_list ) {
+            if (!cJSON_IsObject(smf_change_info_list_local_nonprimitive)) {
+                ogs_error("OpenAPI_ue_reg_status_update_req_data_parseFromJSON() failed [smf_change_info_list]");
+                goto end;
+            }
+            OpenAPI_smf_change_info_t *smf_change_info_listItem = OpenAPI_smf_change_info_parseFromJSON(smf_change_info_list_local_nonprimitive);
+
+            if (!smf_change_info_listItem) {
+                ogs_error("No smf_change_info_listItem");
+                OpenAPI_list_free(smf_change_info_listList);
+                goto end;
+            }
+
+            OpenAPI_list_add(smf_change_info_listList, smf_change_info_listItem);
         }
-
-        OpenAPI_list_add(smf_change_info_listList, smf_change_info_listItem);
-    }
     }
 
     ue_reg_status_update_req_data_local_var = OpenAPI_ue_reg_status_update_req_data_create (
@@ -187,6 +204,20 @@ OpenAPI_ue_reg_status_update_req_data_t *OpenAPI_ue_reg_status_update_req_data_p
 
     return ue_reg_status_update_req_data_local_var;
 end:
+    if (to_release_session_listList) {
+        OpenAPI_list_for_each(to_release_session_listList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(to_release_session_listList);
+        to_release_session_listList = NULL;
+    }
+    if (smf_change_info_listList) {
+        OpenAPI_list_for_each(smf_change_info_listList, node) {
+            OpenAPI_smf_change_info_free(node->data);
+        }
+        OpenAPI_list_free(smf_change_info_listList);
+        smf_change_info_listList = NULL;
+    }
     return NULL;
 }
 

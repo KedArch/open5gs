@@ -34,25 +34,46 @@ void OpenAPI_traffic_influ_sub_free(OpenAPI_traffic_influ_sub_t *traffic_influ_s
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(traffic_influ_sub->dnns, node) {
-        ogs_free(node->data);
+    if (traffic_influ_sub->dnns) {
+        OpenAPI_list_for_each(traffic_influ_sub->dnns, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(traffic_influ_sub->dnns);
+        traffic_influ_sub->dnns = NULL;
     }
-    OpenAPI_list_free(traffic_influ_sub->dnns);
-    OpenAPI_list_for_each(traffic_influ_sub->snssais, node) {
-        OpenAPI_snssai_free(node->data);
+    if (traffic_influ_sub->snssais) {
+        OpenAPI_list_for_each(traffic_influ_sub->snssais, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(traffic_influ_sub->snssais);
+        traffic_influ_sub->snssais = NULL;
     }
-    OpenAPI_list_free(traffic_influ_sub->snssais);
-    OpenAPI_list_for_each(traffic_influ_sub->internal_group_ids, node) {
-        ogs_free(node->data);
+    if (traffic_influ_sub->internal_group_ids) {
+        OpenAPI_list_for_each(traffic_influ_sub->internal_group_ids, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(traffic_influ_sub->internal_group_ids);
+        traffic_influ_sub->internal_group_ids = NULL;
     }
-    OpenAPI_list_free(traffic_influ_sub->internal_group_ids);
-    OpenAPI_list_for_each(traffic_influ_sub->supis, node) {
-        ogs_free(node->data);
+    if (traffic_influ_sub->supis) {
+        OpenAPI_list_for_each(traffic_influ_sub->supis, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(traffic_influ_sub->supis);
+        traffic_influ_sub->supis = NULL;
     }
-    OpenAPI_list_free(traffic_influ_sub->supis);
-    ogs_free(traffic_influ_sub->notification_uri);
-    ogs_free(traffic_influ_sub->expiry);
-    ogs_free(traffic_influ_sub->supported_features);
+    if (traffic_influ_sub->notification_uri) {
+        ogs_free(traffic_influ_sub->notification_uri);
+        traffic_influ_sub->notification_uri = NULL;
+    }
+    if (traffic_influ_sub->expiry) {
+        ogs_free(traffic_influ_sub->expiry);
+        traffic_influ_sub->expiry = NULL;
+    }
+    if (traffic_influ_sub->supported_features) {
+        ogs_free(traffic_influ_sub->supported_features);
+        traffic_influ_sub->supported_features = NULL;
+    }
     ogs_free(traffic_influ_sub);
 }
 
@@ -134,6 +155,10 @@ cJSON *OpenAPI_traffic_influ_sub_convertToJSON(OpenAPI_traffic_influ_sub_t *traf
                     }
     }
 
+    if (!traffic_influ_sub->notification_uri) {
+        ogs_error("OpenAPI_traffic_influ_sub_convertToJSON() failed [notification_uri]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "notificationUri", traffic_influ_sub->notification_uri) == NULL) {
         ogs_error("OpenAPI_traffic_influ_sub_convertToJSON() failed [notification_uri]");
         goto end;
@@ -160,119 +185,120 @@ end:
 OpenAPI_traffic_influ_sub_t *OpenAPI_traffic_influ_sub_parseFromJSON(cJSON *traffic_influ_subJSON)
 {
     OpenAPI_traffic_influ_sub_t *traffic_influ_sub_local_var = NULL;
-    cJSON *dnns = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "dnns");
-
-    OpenAPI_list_t *dnnsList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *dnns = NULL;
+    OpenAPI_list_t *dnnsList = NULL;
+    cJSON *snssais = NULL;
+    OpenAPI_list_t *snssaisList = NULL;
+    cJSON *internal_group_ids = NULL;
+    OpenAPI_list_t *internal_group_idsList = NULL;
+    cJSON *supis = NULL;
+    OpenAPI_list_t *supisList = NULL;
+    cJSON *notification_uri = NULL;
+    cJSON *expiry = NULL;
+    cJSON *supported_features = NULL;
+    dnns = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "dnns");
     if (dnns) {
-    cJSON *dnns_local;
-    if (!cJSON_IsArray(dnns)) {
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [dnns]");
-        goto end;
-    }
-    dnnsList = OpenAPI_list_create();
+        cJSON *dnns_local;
+        if (!cJSON_IsArray(dnns)) {
+            ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [dnns]");
+            goto end;
+        }
+        dnnsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(dnns_local, dnns) {
-    if (!cJSON_IsString(dnns_local)) {
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [dnns]");
-        goto end;
-    }
-    OpenAPI_list_add(dnnsList, ogs_strdup(dnns_local->valuestring));
-    }
+        cJSON_ArrayForEach(dnns_local, dnns) {
+        if (!cJSON_IsString(dnns_local)) {
+            ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [dnns]");
+            goto end;
+        }
+        OpenAPI_list_add(dnnsList, ogs_strdup(dnns_local->valuestring));
+        }
     }
 
-    cJSON *snssais = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "snssais");
-
-    OpenAPI_list_t *snssaisList;
+    snssais = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "snssais");
     if (snssais) {
-    cJSON *snssais_local_nonprimitive;
-    if (!cJSON_IsArray(snssais)){
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [snssais]");
-        goto end;
-    }
-
-    snssaisList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(snssais_local_nonprimitive, snssais ) {
-        if (!cJSON_IsObject(snssais_local_nonprimitive)) {
+        cJSON *snssais_local_nonprimitive;
+        if (!cJSON_IsArray(snssais)){
             ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [snssais]");
             goto end;
         }
-        OpenAPI_snssai_t *snssaisItem = OpenAPI_snssai_parseFromJSON(snssais_local_nonprimitive);
 
-        if (!snssaisItem) {
-            ogs_error("No snssaisItem");
-            OpenAPI_list_free(snssaisList);
+        snssaisList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(snssais_local_nonprimitive, snssais ) {
+            if (!cJSON_IsObject(snssais_local_nonprimitive)) {
+                ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [snssais]");
+                goto end;
+            }
+            OpenAPI_snssai_t *snssaisItem = OpenAPI_snssai_parseFromJSON(snssais_local_nonprimitive);
+
+            if (!snssaisItem) {
+                ogs_error("No snssaisItem");
+                OpenAPI_list_free(snssaisList);
+                goto end;
+            }
+
+            OpenAPI_list_add(snssaisList, snssaisItem);
+        }
+    }
+
+    internal_group_ids = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "internalGroupIds");
+    if (internal_group_ids) {
+        cJSON *internal_group_ids_local;
+        if (!cJSON_IsArray(internal_group_ids)) {
+            ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [internal_group_ids]");
             goto end;
         }
+        internal_group_idsList = OpenAPI_list_create();
 
-        OpenAPI_list_add(snssaisList, snssaisItem);
-    }
-    }
-
-    cJSON *internal_group_ids = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "internalGroupIds");
-
-    OpenAPI_list_t *internal_group_idsList;
-    if (internal_group_ids) {
-    cJSON *internal_group_ids_local;
-    if (!cJSON_IsArray(internal_group_ids)) {
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [internal_group_ids]");
-        goto end;
-    }
-    internal_group_idsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(internal_group_ids_local, internal_group_ids) {
-    if (!cJSON_IsString(internal_group_ids_local)) {
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [internal_group_ids]");
-        goto end;
-    }
-    OpenAPI_list_add(internal_group_idsList, ogs_strdup(internal_group_ids_local->valuestring));
-    }
+        cJSON_ArrayForEach(internal_group_ids_local, internal_group_ids) {
+        if (!cJSON_IsString(internal_group_ids_local)) {
+            ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [internal_group_ids]");
+            goto end;
+        }
+        OpenAPI_list_add(internal_group_idsList, ogs_strdup(internal_group_ids_local->valuestring));
+        }
     }
 
-    cJSON *supis = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "supis");
-
-    OpenAPI_list_t *supisList;
+    supis = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "supis");
     if (supis) {
-    cJSON *supis_local;
-    if (!cJSON_IsArray(supis)) {
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [supis]");
-        goto end;
-    }
-    supisList = OpenAPI_list_create();
+        cJSON *supis_local;
+        if (!cJSON_IsArray(supis)) {
+            ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [supis]");
+            goto end;
+        }
+        supisList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(supis_local, supis) {
-    if (!cJSON_IsString(supis_local)) {
-        ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [supis]");
-        goto end;
-    }
-    OpenAPI_list_add(supisList, ogs_strdup(supis_local->valuestring));
-    }
+        cJSON_ArrayForEach(supis_local, supis) {
+        if (!cJSON_IsString(supis_local)) {
+            ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [supis]");
+            goto end;
+        }
+        OpenAPI_list_add(supisList, ogs_strdup(supis_local->valuestring));
+        }
     }
 
-    cJSON *notification_uri = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "notificationUri");
+    notification_uri = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "notificationUri");
     if (!notification_uri) {
         ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [notification_uri]");
         goto end;
     }
-
     if (!cJSON_IsString(notification_uri)) {
         ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [notification_uri]");
         goto end;
     }
 
-    cJSON *expiry = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "expiry");
-
+    expiry = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "expiry");
     if (expiry) {
-    if (!cJSON_IsString(expiry)) {
+    if (!cJSON_IsString(expiry) && !cJSON_IsNull(expiry)) {
         ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [expiry]");
         goto end;
     }
     }
 
-    cJSON *supported_features = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "supportedFeatures");
-
+    supported_features = cJSON_GetObjectItemCaseSensitive(traffic_influ_subJSON, "supportedFeatures");
     if (supported_features) {
-    if (!cJSON_IsString(supported_features)) {
+    if (!cJSON_IsString(supported_features) && !cJSON_IsNull(supported_features)) {
         ogs_error("OpenAPI_traffic_influ_sub_parseFromJSON() failed [supported_features]");
         goto end;
     }
@@ -284,12 +310,40 @@ OpenAPI_traffic_influ_sub_t *OpenAPI_traffic_influ_sub_parseFromJSON(cJSON *traf
         internal_group_ids ? internal_group_idsList : NULL,
         supis ? supisList : NULL,
         ogs_strdup(notification_uri->valuestring),
-        expiry ? ogs_strdup(expiry->valuestring) : NULL,
-        supported_features ? ogs_strdup(supported_features->valuestring) : NULL
+        expiry && !cJSON_IsNull(expiry) ? ogs_strdup(expiry->valuestring) : NULL,
+        supported_features && !cJSON_IsNull(supported_features) ? ogs_strdup(supported_features->valuestring) : NULL
     );
 
     return traffic_influ_sub_local_var;
 end:
+    if (dnnsList) {
+        OpenAPI_list_for_each(dnnsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(dnnsList);
+        dnnsList = NULL;
+    }
+    if (snssaisList) {
+        OpenAPI_list_for_each(snssaisList, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(snssaisList);
+        snssaisList = NULL;
+    }
+    if (internal_group_idsList) {
+        OpenAPI_list_for_each(internal_group_idsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(internal_group_idsList);
+        internal_group_idsList = NULL;
+    }
+    if (supisList) {
+        OpenAPI_list_for_each(supisList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(supisList);
+        supisList = NULL;
+    }
     return NULL;
 }
 

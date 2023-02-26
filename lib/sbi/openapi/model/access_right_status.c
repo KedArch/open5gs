@@ -40,6 +40,7 @@ end:
 OpenAPI_access_right_status_t *OpenAPI_access_right_status_parseFromJSON(cJSON *access_right_statusJSON)
 {
     OpenAPI_access_right_status_t *access_right_status_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     access_right_status_local_var = OpenAPI_access_right_status_create (
     );
 

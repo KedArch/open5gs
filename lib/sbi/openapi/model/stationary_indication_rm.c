@@ -40,6 +40,7 @@ end:
 OpenAPI_stationary_indication_rm_t *OpenAPI_stationary_indication_rm_parseFromJSON(cJSON *stationary_indication_rmJSON)
 {
     OpenAPI_stationary_indication_rm_t *stationary_indication_rm_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     stationary_indication_rm_local_var = OpenAPI_stationary_indication_rm_create (
     );
 

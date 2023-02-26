@@ -28,13 +28,25 @@ void OpenAPI_pfd_data_for_app_ext_free(OpenAPI_pfd_data_for_app_ext_t *pfd_data_
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(pfd_data_for_app_ext->application_id);
-    OpenAPI_list_for_each(pfd_data_for_app_ext->pfds, node) {
-        OpenAPI_pfd_content_free(node->data);
+    if (pfd_data_for_app_ext->application_id) {
+        ogs_free(pfd_data_for_app_ext->application_id);
+        pfd_data_for_app_ext->application_id = NULL;
     }
-    OpenAPI_list_free(pfd_data_for_app_ext->pfds);
-    ogs_free(pfd_data_for_app_ext->caching_time);
-    ogs_free(pfd_data_for_app_ext->supp_feat);
+    if (pfd_data_for_app_ext->pfds) {
+        OpenAPI_list_for_each(pfd_data_for_app_ext->pfds, node) {
+            OpenAPI_pfd_content_free(node->data);
+        }
+        OpenAPI_list_free(pfd_data_for_app_ext->pfds);
+        pfd_data_for_app_ext->pfds = NULL;
+    }
+    if (pfd_data_for_app_ext->caching_time) {
+        ogs_free(pfd_data_for_app_ext->caching_time);
+        pfd_data_for_app_ext->caching_time = NULL;
+    }
+    if (pfd_data_for_app_ext->supp_feat) {
+        ogs_free(pfd_data_for_app_ext->supp_feat);
+        pfd_data_for_app_ext->supp_feat = NULL;
+    }
     ogs_free(pfd_data_for_app_ext);
 }
 
@@ -48,11 +60,19 @@ cJSON *OpenAPI_pfd_data_for_app_ext_convertToJSON(OpenAPI_pfd_data_for_app_ext_t
     }
 
     item = cJSON_CreateObject();
+    if (!pfd_data_for_app_ext->application_id) {
+        ogs_error("OpenAPI_pfd_data_for_app_ext_convertToJSON() failed [application_id]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "applicationId", pfd_data_for_app_ext->application_id) == NULL) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_convertToJSON() failed [application_id]");
         goto end;
     }
 
+    if (!pfd_data_for_app_ext->pfds) {
+        ogs_error("OpenAPI_pfd_data_for_app_ext_convertToJSON() failed [pfds]");
+        return NULL;
+    }
     cJSON *pfdsList = cJSON_AddArrayToObject(item, "pfds");
     if (pfdsList == NULL) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_convertToJSON() failed [pfds]");
@@ -92,61 +112,62 @@ end:
 OpenAPI_pfd_data_for_app_ext_t *OpenAPI_pfd_data_for_app_ext_parseFromJSON(cJSON *pfd_data_for_app_extJSON)
 {
     OpenAPI_pfd_data_for_app_ext_t *pfd_data_for_app_ext_local_var = NULL;
-    cJSON *application_id = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "applicationId");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *application_id = NULL;
+    cJSON *pfds = NULL;
+    OpenAPI_list_t *pfdsList = NULL;
+    cJSON *caching_time = NULL;
+    cJSON *supp_feat = NULL;
+    application_id = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "applicationId");
     if (!application_id) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [application_id]");
         goto end;
     }
-
     if (!cJSON_IsString(application_id)) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [application_id]");
         goto end;
     }
 
-    cJSON *pfds = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "pfds");
+    pfds = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "pfds");
     if (!pfds) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [pfds]");
         goto end;
     }
-
-    OpenAPI_list_t *pfdsList;
-    cJSON *pfds_local_nonprimitive;
-    if (!cJSON_IsArray(pfds)){
-        ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [pfds]");
-        goto end;
-    }
-
-    pfdsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(pfds_local_nonprimitive, pfds ) {
-        if (!cJSON_IsObject(pfds_local_nonprimitive)) {
+        cJSON *pfds_local_nonprimitive;
+        if (!cJSON_IsArray(pfds)){
             ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [pfds]");
             goto end;
         }
-        OpenAPI_pfd_content_t *pfdsItem = OpenAPI_pfd_content_parseFromJSON(pfds_local_nonprimitive);
 
-        if (!pfdsItem) {
-            ogs_error("No pfdsItem");
-            OpenAPI_list_free(pfdsList);
-            goto end;
+        pfdsList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(pfds_local_nonprimitive, pfds ) {
+            if (!cJSON_IsObject(pfds_local_nonprimitive)) {
+                ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [pfds]");
+                goto end;
+            }
+            OpenAPI_pfd_content_t *pfdsItem = OpenAPI_pfd_content_parseFromJSON(pfds_local_nonprimitive);
+
+            if (!pfdsItem) {
+                ogs_error("No pfdsItem");
+                OpenAPI_list_free(pfdsList);
+                goto end;
+            }
+
+            OpenAPI_list_add(pfdsList, pfdsItem);
         }
 
-        OpenAPI_list_add(pfdsList, pfdsItem);
-    }
-
-    cJSON *caching_time = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "cachingTime");
-
+    caching_time = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "cachingTime");
     if (caching_time) {
-    if (!cJSON_IsString(caching_time)) {
+    if (!cJSON_IsString(caching_time) && !cJSON_IsNull(caching_time)) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [caching_time]");
         goto end;
     }
     }
 
-    cJSON *supp_feat = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "suppFeat");
-
+    supp_feat = cJSON_GetObjectItemCaseSensitive(pfd_data_for_app_extJSON, "suppFeat");
     if (supp_feat) {
-    if (!cJSON_IsString(supp_feat)) {
+    if (!cJSON_IsString(supp_feat) && !cJSON_IsNull(supp_feat)) {
         ogs_error("OpenAPI_pfd_data_for_app_ext_parseFromJSON() failed [supp_feat]");
         goto end;
     }
@@ -155,12 +176,19 @@ OpenAPI_pfd_data_for_app_ext_t *OpenAPI_pfd_data_for_app_ext_parseFromJSON(cJSON
     pfd_data_for_app_ext_local_var = OpenAPI_pfd_data_for_app_ext_create (
         ogs_strdup(application_id->valuestring),
         pfdsList,
-        caching_time ? ogs_strdup(caching_time->valuestring) : NULL,
-        supp_feat ? ogs_strdup(supp_feat->valuestring) : NULL
+        caching_time && !cJSON_IsNull(caching_time) ? ogs_strdup(caching_time->valuestring) : NULL,
+        supp_feat && !cJSON_IsNull(supp_feat) ? ogs_strdup(supp_feat->valuestring) : NULL
     );
 
     return pfd_data_for_app_ext_local_var;
 end:
+    if (pfdsList) {
+        OpenAPI_list_for_each(pfdsList, node) {
+            OpenAPI_pfd_content_free(node->data);
+        }
+        OpenAPI_list_free(pfdsList);
+        pfdsList = NULL;
+    }
     return NULL;
 }
 

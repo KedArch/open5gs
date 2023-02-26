@@ -62,8 +62,10 @@ end:
 OpenAPI_app_port_id_t *OpenAPI_app_port_id_parseFromJSON(cJSON *app_port_idJSON)
 {
     OpenAPI_app_port_id_t *app_port_id_local_var = NULL;
-    cJSON *destination_port = cJSON_GetObjectItemCaseSensitive(app_port_idJSON, "destinationPort");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *destination_port = NULL;
+    cJSON *originator_port = NULL;
+    destination_port = cJSON_GetObjectItemCaseSensitive(app_port_idJSON, "destinationPort");
     if (destination_port) {
     if (!cJSON_IsNumber(destination_port)) {
         ogs_error("OpenAPI_app_port_id_parseFromJSON() failed [destination_port]");
@@ -71,8 +73,7 @@ OpenAPI_app_port_id_t *OpenAPI_app_port_id_parseFromJSON(cJSON *app_port_idJSON)
     }
     }
 
-    cJSON *originator_port = cJSON_GetObjectItemCaseSensitive(app_port_idJSON, "originatorPort");
-
+    originator_port = cJSON_GetObjectItemCaseSensitive(app_port_idJSON, "originatorPort");
     if (originator_port) {
     if (!cJSON_IsNumber(originator_port)) {
         ogs_error("OpenAPI_app_port_id_parseFromJSON() failed [originator_port]");

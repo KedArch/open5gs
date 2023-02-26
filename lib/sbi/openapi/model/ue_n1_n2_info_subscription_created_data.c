@@ -24,8 +24,14 @@ void OpenAPI_ue_n1_n2_info_subscription_created_data_free(OpenAPI_ue_n1_n2_info_
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(ue_n1_n2_info_subscription_created_data->n1n2_notify_subscription_id);
-    ogs_free(ue_n1_n2_info_subscription_created_data->supported_features);
+    if (ue_n1_n2_info_subscription_created_data->n1n2_notify_subscription_id) {
+        ogs_free(ue_n1_n2_info_subscription_created_data->n1n2_notify_subscription_id);
+        ue_n1_n2_info_subscription_created_data->n1n2_notify_subscription_id = NULL;
+    }
+    if (ue_n1_n2_info_subscription_created_data->supported_features) {
+        ogs_free(ue_n1_n2_info_subscription_created_data->supported_features);
+        ue_n1_n2_info_subscription_created_data->supported_features = NULL;
+    }
     ogs_free(ue_n1_n2_info_subscription_created_data);
 }
 
@@ -39,6 +45,10 @@ cJSON *OpenAPI_ue_n1_n2_info_subscription_created_data_convertToJSON(OpenAPI_ue_
     }
 
     item = cJSON_CreateObject();
+    if (!ue_n1_n2_info_subscription_created_data->n1n2_notify_subscription_id) {
+        ogs_error("OpenAPI_ue_n1_n2_info_subscription_created_data_convertToJSON() failed [n1n2_notify_subscription_id]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "n1n2NotifySubscriptionId", ue_n1_n2_info_subscription_created_data->n1n2_notify_subscription_id) == NULL) {
         ogs_error("OpenAPI_ue_n1_n2_info_subscription_created_data_convertToJSON() failed [n1n2_notify_subscription_id]");
         goto end;
@@ -58,21 +68,22 @@ end:
 OpenAPI_ue_n1_n2_info_subscription_created_data_t *OpenAPI_ue_n1_n2_info_subscription_created_data_parseFromJSON(cJSON *ue_n1_n2_info_subscription_created_dataJSON)
 {
     OpenAPI_ue_n1_n2_info_subscription_created_data_t *ue_n1_n2_info_subscription_created_data_local_var = NULL;
-    cJSON *n1n2_notify_subscription_id = cJSON_GetObjectItemCaseSensitive(ue_n1_n2_info_subscription_created_dataJSON, "n1n2NotifySubscriptionId");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *n1n2_notify_subscription_id = NULL;
+    cJSON *supported_features = NULL;
+    n1n2_notify_subscription_id = cJSON_GetObjectItemCaseSensitive(ue_n1_n2_info_subscription_created_dataJSON, "n1n2NotifySubscriptionId");
     if (!n1n2_notify_subscription_id) {
         ogs_error("OpenAPI_ue_n1_n2_info_subscription_created_data_parseFromJSON() failed [n1n2_notify_subscription_id]");
         goto end;
     }
-
     if (!cJSON_IsString(n1n2_notify_subscription_id)) {
         ogs_error("OpenAPI_ue_n1_n2_info_subscription_created_data_parseFromJSON() failed [n1n2_notify_subscription_id]");
         goto end;
     }
 
-    cJSON *supported_features = cJSON_GetObjectItemCaseSensitive(ue_n1_n2_info_subscription_created_dataJSON, "supportedFeatures");
-
+    supported_features = cJSON_GetObjectItemCaseSensitive(ue_n1_n2_info_subscription_created_dataJSON, "supportedFeatures");
     if (supported_features) {
-    if (!cJSON_IsString(supported_features)) {
+    if (!cJSON_IsString(supported_features) && !cJSON_IsNull(supported_features)) {
         ogs_error("OpenAPI_ue_n1_n2_info_subscription_created_data_parseFromJSON() failed [supported_features]");
         goto end;
     }
@@ -80,7 +91,7 @@ OpenAPI_ue_n1_n2_info_subscription_created_data_t *OpenAPI_ue_n1_n2_info_subscri
 
     ue_n1_n2_info_subscription_created_data_local_var = OpenAPI_ue_n1_n2_info_subscription_created_data_create (
         ogs_strdup(n1n2_notify_subscription_id->valuestring),
-        supported_features ? ogs_strdup(supported_features->valuestring) : NULL
+        supported_features && !cJSON_IsNull(supported_features) ? ogs_strdup(supported_features->valuestring) : NULL
     );
 
     return ue_n1_n2_info_subscription_created_data_local_var;

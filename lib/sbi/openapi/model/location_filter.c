@@ -40,6 +40,7 @@ end:
 OpenAPI_location_filter_t *OpenAPI_location_filter_parseFromJSON(cJSON *location_filterJSON)
 {
     OpenAPI_location_filter_t *location_filter_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     location_filter_local_var = OpenAPI_location_filter_create (
     );
 

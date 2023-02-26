@@ -40,6 +40,7 @@ end:
 OpenAPI_access_tech_t *OpenAPI_access_tech_parseFromJSON(cJSON *access_techJSON)
 {
     OpenAPI_access_tech_t *access_tech_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     access_tech_local_var = OpenAPI_access_tech_create (
     );
 

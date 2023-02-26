@@ -40,6 +40,7 @@ end:
 OpenAPI_reachability_filter_t *OpenAPI_reachability_filter_parseFromJSON(cJSON *reachability_filterJSON)
 {
     OpenAPI_reachability_filter_t *reachability_filter_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     reachability_filter_local_var = OpenAPI_reachability_filter_create (
     );
 

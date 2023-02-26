@@ -40,6 +40,7 @@ end:
 OpenAPI_cm_state_t *OpenAPI_cm_state_parseFromJSON(cJSON *cm_stateJSON)
 {
     OpenAPI_cm_state_t *cm_state_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     cm_state_local_var = OpenAPI_cm_state_create (
     );
 

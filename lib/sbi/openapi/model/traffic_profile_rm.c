@@ -40,6 +40,7 @@ end:
 OpenAPI_traffic_profile_rm_t *OpenAPI_traffic_profile_rm_parseFromJSON(cJSON *traffic_profile_rmJSON)
 {
     OpenAPI_traffic_profile_rm_t *traffic_profile_rm_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     traffic_profile_rm_local_var = OpenAPI_traffic_profile_rm_create (
     );
 

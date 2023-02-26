@@ -26,12 +26,21 @@ void OpenAPI_scheduled_communication_time_free(OpenAPI_scheduled_communication_t
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(scheduled_communication_time->days_of_week, node) {
-        ogs_free(node->data);
+    if (scheduled_communication_time->days_of_week) {
+        OpenAPI_list_for_each(scheduled_communication_time->days_of_week, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(scheduled_communication_time->days_of_week);
+        scheduled_communication_time->days_of_week = NULL;
     }
-    OpenAPI_list_free(scheduled_communication_time->days_of_week);
-    ogs_free(scheduled_communication_time->time_of_day_start);
-    ogs_free(scheduled_communication_time->time_of_day_end);
+    if (scheduled_communication_time->time_of_day_start) {
+        ogs_free(scheduled_communication_time->time_of_day_start);
+        scheduled_communication_time->time_of_day_start = NULL;
+    }
+    if (scheduled_communication_time->time_of_day_end) {
+        ogs_free(scheduled_communication_time->time_of_day_end);
+        scheduled_communication_time->time_of_day_end = NULL;
+    }
     ogs_free(scheduled_communication_time);
 }
 
@@ -82,39 +91,46 @@ end:
 OpenAPI_scheduled_communication_time_t *OpenAPI_scheduled_communication_time_parseFromJSON(cJSON *scheduled_communication_timeJSON)
 {
     OpenAPI_scheduled_communication_time_t *scheduled_communication_time_local_var = NULL;
-    cJSON *days_of_week = cJSON_GetObjectItemCaseSensitive(scheduled_communication_timeJSON, "daysOfWeek");
-
-    OpenAPI_list_t *days_of_weekList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *days_of_week = NULL;
+    OpenAPI_list_t *days_of_weekList = NULL;
+    cJSON *time_of_day_start = NULL;
+    cJSON *time_of_day_end = NULL;
+    days_of_week = cJSON_GetObjectItemCaseSensitive(scheduled_communication_timeJSON, "daysOfWeek");
     if (days_of_week) {
-    cJSON *days_of_week_local;
-    if (!cJSON_IsArray(days_of_week)) {
-        ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [days_of_week]");
-        goto end;
-    }
-    days_of_weekList = OpenAPI_list_create();
+        cJSON *days_of_week_local;
+        if (!cJSON_IsArray(days_of_week)) {
+            ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [days_of_week]");
+            goto end;
+        }
+        days_of_weekList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(days_of_week_local, days_of_week) {
-    if (!cJSON_IsNumber(days_of_week_local)) {
-        ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [days_of_week]");
-        goto end;
-    }
-    OpenAPI_list_add(days_of_weekList, &days_of_week_local->valuedouble);
-    }
+        cJSON_ArrayForEach(days_of_week_local, days_of_week) {
+        if (!cJSON_IsNumber(days_of_week_local)) {
+            ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [days_of_week]");
+            goto end;
+        }
+        double *days_of_week_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!days_of_week_local_value) {
+            ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [days_of_week]");
+            goto end;
+        }
+        *days_of_week_local_value = days_of_week_local->valuedouble;
+        OpenAPI_list_add(days_of_weekList, days_of_week_local_value);
+        }
     }
 
-    cJSON *time_of_day_start = cJSON_GetObjectItemCaseSensitive(scheduled_communication_timeJSON, "timeOfDayStart");
-
+    time_of_day_start = cJSON_GetObjectItemCaseSensitive(scheduled_communication_timeJSON, "timeOfDayStart");
     if (time_of_day_start) {
-    if (!cJSON_IsString(time_of_day_start)) {
+    if (!cJSON_IsString(time_of_day_start) && !cJSON_IsNull(time_of_day_start)) {
         ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [time_of_day_start]");
         goto end;
     }
     }
 
-    cJSON *time_of_day_end = cJSON_GetObjectItemCaseSensitive(scheduled_communication_timeJSON, "timeOfDayEnd");
-
+    time_of_day_end = cJSON_GetObjectItemCaseSensitive(scheduled_communication_timeJSON, "timeOfDayEnd");
     if (time_of_day_end) {
-    if (!cJSON_IsString(time_of_day_end)) {
+    if (!cJSON_IsString(time_of_day_end) && !cJSON_IsNull(time_of_day_end)) {
         ogs_error("OpenAPI_scheduled_communication_time_parseFromJSON() failed [time_of_day_end]");
         goto end;
     }
@@ -122,12 +138,19 @@ OpenAPI_scheduled_communication_time_t *OpenAPI_scheduled_communication_time_par
 
     scheduled_communication_time_local_var = OpenAPI_scheduled_communication_time_create (
         days_of_week ? days_of_weekList : NULL,
-        time_of_day_start ? ogs_strdup(time_of_day_start->valuestring) : NULL,
-        time_of_day_end ? ogs_strdup(time_of_day_end->valuestring) : NULL
+        time_of_day_start && !cJSON_IsNull(time_of_day_start) ? ogs_strdup(time_of_day_start->valuestring) : NULL,
+        time_of_day_end && !cJSON_IsNull(time_of_day_end) ? ogs_strdup(time_of_day_end->valuestring) : NULL
     );
 
     return scheduled_communication_time_local_var;
 end:
+    if (days_of_weekList) {
+        OpenAPI_list_for_each(days_of_weekList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(days_of_weekList);
+        days_of_weekList = NULL;
+    }
     return NULL;
 }
 

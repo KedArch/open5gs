@@ -24,11 +24,17 @@ void OpenAPI_expected_ue_behavior_free(OpenAPI_expected_ue_behavior_t *expected_
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(expected_ue_behavior->exp_move_trajectory, node) {
-        OpenAPI_user_location_free(node->data);
+    if (expected_ue_behavior->exp_move_trajectory) {
+        OpenAPI_list_for_each(expected_ue_behavior->exp_move_trajectory, node) {
+            OpenAPI_user_location_free(node->data);
+        }
+        OpenAPI_list_free(expected_ue_behavior->exp_move_trajectory);
+        expected_ue_behavior->exp_move_trajectory = NULL;
     }
-    OpenAPI_list_free(expected_ue_behavior->exp_move_trajectory);
-    ogs_free(expected_ue_behavior->validity_time);
+    if (expected_ue_behavior->validity_time) {
+        ogs_free(expected_ue_behavior->validity_time);
+        expected_ue_behavior->validity_time = NULL;
+    }
     ogs_free(expected_ue_behavior);
 }
 
@@ -42,6 +48,10 @@ cJSON *OpenAPI_expected_ue_behavior_convertToJSON(OpenAPI_expected_ue_behavior_t
     }
 
     item = cJSON_CreateObject();
+    if (!expected_ue_behavior->exp_move_trajectory) {
+        ogs_error("OpenAPI_expected_ue_behavior_convertToJSON() failed [exp_move_trajectory]");
+        return NULL;
+    }
     cJSON *exp_move_trajectoryList = cJSON_AddArrayToObject(item, "expMoveTrajectory");
     if (exp_move_trajectoryList == NULL) {
         ogs_error("OpenAPI_expected_ue_behavior_convertToJSON() failed [exp_move_trajectory]");
@@ -60,6 +70,10 @@ cJSON *OpenAPI_expected_ue_behavior_convertToJSON(OpenAPI_expected_ue_behavior_t
         }
     }
 
+    if (!expected_ue_behavior->validity_time) {
+        ogs_error("OpenAPI_expected_ue_behavior_convertToJSON() failed [validity_time]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "validityTime", expected_ue_behavior->validity_time) == NULL) {
         ogs_error("OpenAPI_expected_ue_behavior_convertToJSON() failed [validity_time]");
         goto end;
@@ -72,44 +86,45 @@ end:
 OpenAPI_expected_ue_behavior_t *OpenAPI_expected_ue_behavior_parseFromJSON(cJSON *expected_ue_behaviorJSON)
 {
     OpenAPI_expected_ue_behavior_t *expected_ue_behavior_local_var = NULL;
-    cJSON *exp_move_trajectory = cJSON_GetObjectItemCaseSensitive(expected_ue_behaviorJSON, "expMoveTrajectory");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *exp_move_trajectory = NULL;
+    OpenAPI_list_t *exp_move_trajectoryList = NULL;
+    cJSON *validity_time = NULL;
+    exp_move_trajectory = cJSON_GetObjectItemCaseSensitive(expected_ue_behaviorJSON, "expMoveTrajectory");
     if (!exp_move_trajectory) {
         ogs_error("OpenAPI_expected_ue_behavior_parseFromJSON() failed [exp_move_trajectory]");
         goto end;
     }
-
-    OpenAPI_list_t *exp_move_trajectoryList;
-    cJSON *exp_move_trajectory_local_nonprimitive;
-    if (!cJSON_IsArray(exp_move_trajectory)){
-        ogs_error("OpenAPI_expected_ue_behavior_parseFromJSON() failed [exp_move_trajectory]");
-        goto end;
-    }
-
-    exp_move_trajectoryList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(exp_move_trajectory_local_nonprimitive, exp_move_trajectory ) {
-        if (!cJSON_IsObject(exp_move_trajectory_local_nonprimitive)) {
+        cJSON *exp_move_trajectory_local_nonprimitive;
+        if (!cJSON_IsArray(exp_move_trajectory)){
             ogs_error("OpenAPI_expected_ue_behavior_parseFromJSON() failed [exp_move_trajectory]");
             goto end;
         }
-        OpenAPI_user_location_t *exp_move_trajectoryItem = OpenAPI_user_location_parseFromJSON(exp_move_trajectory_local_nonprimitive);
 
-        if (!exp_move_trajectoryItem) {
-            ogs_error("No exp_move_trajectoryItem");
-            OpenAPI_list_free(exp_move_trajectoryList);
-            goto end;
+        exp_move_trajectoryList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(exp_move_trajectory_local_nonprimitive, exp_move_trajectory ) {
+            if (!cJSON_IsObject(exp_move_trajectory_local_nonprimitive)) {
+                ogs_error("OpenAPI_expected_ue_behavior_parseFromJSON() failed [exp_move_trajectory]");
+                goto end;
+            }
+            OpenAPI_user_location_t *exp_move_trajectoryItem = OpenAPI_user_location_parseFromJSON(exp_move_trajectory_local_nonprimitive);
+
+            if (!exp_move_trajectoryItem) {
+                ogs_error("No exp_move_trajectoryItem");
+                OpenAPI_list_free(exp_move_trajectoryList);
+                goto end;
+            }
+
+            OpenAPI_list_add(exp_move_trajectoryList, exp_move_trajectoryItem);
         }
 
-        OpenAPI_list_add(exp_move_trajectoryList, exp_move_trajectoryItem);
-    }
-
-    cJSON *validity_time = cJSON_GetObjectItemCaseSensitive(expected_ue_behaviorJSON, "validityTime");
+    validity_time = cJSON_GetObjectItemCaseSensitive(expected_ue_behaviorJSON, "validityTime");
     if (!validity_time) {
         ogs_error("OpenAPI_expected_ue_behavior_parseFromJSON() failed [validity_time]");
         goto end;
     }
-
-    if (!cJSON_IsString(validity_time)) {
+    if (!cJSON_IsString(validity_time) && !cJSON_IsNull(validity_time)) {
         ogs_error("OpenAPI_expected_ue_behavior_parseFromJSON() failed [validity_time]");
         goto end;
     }
@@ -121,6 +136,13 @@ OpenAPI_expected_ue_behavior_t *OpenAPI_expected_ue_behavior_parseFromJSON(cJSON
 
     return expected_ue_behavior_local_var;
 end:
+    if (exp_move_trajectoryList) {
+        OpenAPI_list_for_each(exp_move_trajectoryList, node) {
+            OpenAPI_user_location_free(node->data);
+        }
+        OpenAPI_list_free(exp_move_trajectoryList);
+        exp_move_trajectoryList = NULL;
+    }
     return NULL;
 }
 

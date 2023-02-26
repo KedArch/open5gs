@@ -35,6 +35,10 @@ cJSON *OpenAPI_pdu_session_notify_item_convertToJSON(OpenAPI_pdu_session_notify_
     }
 
     item = cJSON_CreateObject();
+    if (pdu_session_notify_item->notification_cause == OpenAPI_notification_cause_NULL) {
+        ogs_error("OpenAPI_pdu_session_notify_item_convertToJSON() failed [notification_cause]");
+        return NULL;
+    }
     if (cJSON_AddStringToObject(item, "notificationCause", OpenAPI_notification_cause_ToString(pdu_session_notify_item->notification_cause)) == NULL) {
         ogs_error("OpenAPI_pdu_session_notify_item_convertToJSON() failed [notification_cause]");
         goto end;
@@ -47,13 +51,14 @@ end:
 OpenAPI_pdu_session_notify_item_t *OpenAPI_pdu_session_notify_item_parseFromJSON(cJSON *pdu_session_notify_itemJSON)
 {
     OpenAPI_pdu_session_notify_item_t *pdu_session_notify_item_local_var = NULL;
-    cJSON *notification_cause = cJSON_GetObjectItemCaseSensitive(pdu_session_notify_itemJSON, "notificationCause");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *notification_cause = NULL;
+    OpenAPI_notification_cause_e notification_causeVariable = 0;
+    notification_cause = cJSON_GetObjectItemCaseSensitive(pdu_session_notify_itemJSON, "notificationCause");
     if (!notification_cause) {
         ogs_error("OpenAPI_pdu_session_notify_item_parseFromJSON() failed [notification_cause]");
         goto end;
     }
-
-    OpenAPI_notification_cause_e notification_causeVariable;
     if (!cJSON_IsString(notification_cause)) {
         ogs_error("OpenAPI_pdu_session_notify_item_parseFromJSON() failed [notification_cause]");
         goto end;

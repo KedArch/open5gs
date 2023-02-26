@@ -26,8 +26,14 @@ void OpenAPI_route_information_free(OpenAPI_route_information_t *route_informati
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(route_information->ipv4_addr);
-    ogs_free(route_information->ipv6_addr);
+    if (route_information->ipv4_addr) {
+        ogs_free(route_information->ipv4_addr);
+        route_information->ipv4_addr = NULL;
+    }
+    if (route_information->ipv6_addr) {
+        ogs_free(route_information->ipv6_addr);
+        route_information->ipv6_addr = NULL;
+    }
     ogs_free(route_information);
 }
 
@@ -67,38 +73,39 @@ end:
 OpenAPI_route_information_t *OpenAPI_route_information_parseFromJSON(cJSON *route_informationJSON)
 {
     OpenAPI_route_information_t *route_information_local_var = NULL;
-    cJSON *ipv4_addr = cJSON_GetObjectItemCaseSensitive(route_informationJSON, "ipv4Addr");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *ipv4_addr = NULL;
+    cJSON *ipv6_addr = NULL;
+    cJSON *port_number = NULL;
+    ipv4_addr = cJSON_GetObjectItemCaseSensitive(route_informationJSON, "ipv4Addr");
     if (ipv4_addr) {
-    if (!cJSON_IsString(ipv4_addr)) {
+    if (!cJSON_IsString(ipv4_addr) && !cJSON_IsNull(ipv4_addr)) {
         ogs_error("OpenAPI_route_information_parseFromJSON() failed [ipv4_addr]");
         goto end;
     }
     }
 
-    cJSON *ipv6_addr = cJSON_GetObjectItemCaseSensitive(route_informationJSON, "ipv6Addr");
-
+    ipv6_addr = cJSON_GetObjectItemCaseSensitive(route_informationJSON, "ipv6Addr");
     if (ipv6_addr) {
-    if (!cJSON_IsString(ipv6_addr)) {
+    if (!cJSON_IsString(ipv6_addr) && !cJSON_IsNull(ipv6_addr)) {
         ogs_error("OpenAPI_route_information_parseFromJSON() failed [ipv6_addr]");
         goto end;
     }
     }
 
-    cJSON *port_number = cJSON_GetObjectItemCaseSensitive(route_informationJSON, "portNumber");
+    port_number = cJSON_GetObjectItemCaseSensitive(route_informationJSON, "portNumber");
     if (!port_number) {
         ogs_error("OpenAPI_route_information_parseFromJSON() failed [port_number]");
         goto end;
     }
-
     if (!cJSON_IsNumber(port_number)) {
         ogs_error("OpenAPI_route_information_parseFromJSON() failed [port_number]");
         goto end;
     }
 
     route_information_local_var = OpenAPI_route_information_create (
-        ipv4_addr ? ogs_strdup(ipv4_addr->valuestring) : NULL,
-        ipv6_addr ? ogs_strdup(ipv6_addr->valuestring) : NULL,
+        ipv4_addr && !cJSON_IsNull(ipv4_addr) ? ogs_strdup(ipv4_addr->valuestring) : NULL,
+        ipv6_addr && !cJSON_IsNull(ipv6_addr) ? ogs_strdup(ipv6_addr->valuestring) : NULL,
         
         port_number->valuedouble
     );

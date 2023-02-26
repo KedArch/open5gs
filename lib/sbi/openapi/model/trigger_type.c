@@ -40,6 +40,7 @@ end:
 OpenAPI_trigger_type_t *OpenAPI_trigger_type_parseFromJSON(cJSON *trigger_typeJSON)
 {
     OpenAPI_trigger_type_t *trigger_type_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     trigger_type_local_var = OpenAPI_trigger_type_create (
     );
 

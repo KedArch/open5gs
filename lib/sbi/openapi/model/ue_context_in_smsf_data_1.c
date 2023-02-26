@@ -24,8 +24,14 @@ void OpenAPI_ue_context_in_smsf_data_1_free(OpenAPI_ue_context_in_smsf_data_1_t 
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_smsf_info_1_free(ue_context_in_smsf_data_1->smsf_info3_gpp_access);
-    OpenAPI_smsf_info_1_free(ue_context_in_smsf_data_1->smsf_info_non3_gpp_access);
+    if (ue_context_in_smsf_data_1->smsf_info3_gpp_access) {
+        OpenAPI_smsf_info_1_free(ue_context_in_smsf_data_1->smsf_info3_gpp_access);
+        ue_context_in_smsf_data_1->smsf_info3_gpp_access = NULL;
+    }
+    if (ue_context_in_smsf_data_1->smsf_info_non3_gpp_access) {
+        OpenAPI_smsf_info_1_free(ue_context_in_smsf_data_1->smsf_info_non3_gpp_access);
+        ue_context_in_smsf_data_1->smsf_info_non3_gpp_access = NULL;
+    }
     ogs_free(ue_context_in_smsf_data_1);
 }
 
@@ -72,16 +78,17 @@ end:
 OpenAPI_ue_context_in_smsf_data_1_t *OpenAPI_ue_context_in_smsf_data_1_parseFromJSON(cJSON *ue_context_in_smsf_data_1JSON)
 {
     OpenAPI_ue_context_in_smsf_data_1_t *ue_context_in_smsf_data_1_local_var = NULL;
-    cJSON *smsf_info3_gpp_access = cJSON_GetObjectItemCaseSensitive(ue_context_in_smsf_data_1JSON, "smsfInfo3GppAccess");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *smsf_info3_gpp_access = NULL;
     OpenAPI_smsf_info_1_t *smsf_info3_gpp_access_local_nonprim = NULL;
+    cJSON *smsf_info_non3_gpp_access = NULL;
+    OpenAPI_smsf_info_1_t *smsf_info_non3_gpp_access_local_nonprim = NULL;
+    smsf_info3_gpp_access = cJSON_GetObjectItemCaseSensitive(ue_context_in_smsf_data_1JSON, "smsfInfo3GppAccess");
     if (smsf_info3_gpp_access) {
     smsf_info3_gpp_access_local_nonprim = OpenAPI_smsf_info_1_parseFromJSON(smsf_info3_gpp_access);
     }
 
-    cJSON *smsf_info_non3_gpp_access = cJSON_GetObjectItemCaseSensitive(ue_context_in_smsf_data_1JSON, "smsfInfoNon3GppAccess");
-
-    OpenAPI_smsf_info_1_t *smsf_info_non3_gpp_access_local_nonprim = NULL;
+    smsf_info_non3_gpp_access = cJSON_GetObjectItemCaseSensitive(ue_context_in_smsf_data_1JSON, "smsfInfoNon3GppAccess");
     if (smsf_info_non3_gpp_access) {
     smsf_info_non3_gpp_access_local_nonprim = OpenAPI_smsf_info_1_parseFromJSON(smsf_info_non3_gpp_access);
     }
@@ -93,6 +100,14 @@ OpenAPI_ue_context_in_smsf_data_1_t *OpenAPI_ue_context_in_smsf_data_1_parseFrom
 
     return ue_context_in_smsf_data_1_local_var;
 end:
+    if (smsf_info3_gpp_access_local_nonprim) {
+        OpenAPI_smsf_info_1_free(smsf_info3_gpp_access_local_nonprim);
+        smsf_info3_gpp_access_local_nonprim = NULL;
+    }
+    if (smsf_info_non3_gpp_access_local_nonprim) {
+        OpenAPI_smsf_info_1_free(smsf_info_non3_gpp_access_local_nonprim);
+        smsf_info_non3_gpp_access_local_nonprim = NULL;
+    }
     return NULL;
 }
 

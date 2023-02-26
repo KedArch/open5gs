@@ -40,6 +40,7 @@ end:
 OpenAPI_external_client_type_t *OpenAPI_external_client_type_parseFromJSON(cJSON *external_client_typeJSON)
 {
     OpenAPI_external_client_type_t *external_client_type_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     external_client_type_local_var = OpenAPI_external_client_type_create (
     );
 

@@ -26,15 +26,24 @@ void OpenAPI_location_area_free(OpenAPI_location_area_t *location_area)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(location_area->geographic_areas, node) {
-        OpenAPI_geographic_area_free(node->data);
+    if (location_area->geographic_areas) {
+        OpenAPI_list_for_each(location_area->geographic_areas, node) {
+            OpenAPI_geographic_area_free(node->data);
+        }
+        OpenAPI_list_free(location_area->geographic_areas);
+        location_area->geographic_areas = NULL;
     }
-    OpenAPI_list_free(location_area->geographic_areas);
-    OpenAPI_list_for_each(location_area->civic_addresses, node) {
-        OpenAPI_civic_address_free(node->data);
+    if (location_area->civic_addresses) {
+        OpenAPI_list_for_each(location_area->civic_addresses, node) {
+            OpenAPI_civic_address_free(node->data);
+        }
+        OpenAPI_list_free(location_area->civic_addresses);
+        location_area->civic_addresses = NULL;
     }
-    OpenAPI_list_free(location_area->civic_addresses);
-    OpenAPI_network_area_info_free(location_area->nw_area_info);
+    if (location_area->nw_area_info) {
+        OpenAPI_network_area_info_free(location_area->nw_area_info);
+        location_area->nw_area_info = NULL;
+    }
     ogs_free(location_area);
 }
 
@@ -108,67 +117,68 @@ end:
 OpenAPI_location_area_t *OpenAPI_location_area_parseFromJSON(cJSON *location_areaJSON)
 {
     OpenAPI_location_area_t *location_area_local_var = NULL;
-    cJSON *geographic_areas = cJSON_GetObjectItemCaseSensitive(location_areaJSON, "geographicAreas");
-
-    OpenAPI_list_t *geographic_areasList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *geographic_areas = NULL;
+    OpenAPI_list_t *geographic_areasList = NULL;
+    cJSON *civic_addresses = NULL;
+    OpenAPI_list_t *civic_addressesList = NULL;
+    cJSON *nw_area_info = NULL;
+    OpenAPI_network_area_info_t *nw_area_info_local_nonprim = NULL;
+    geographic_areas = cJSON_GetObjectItemCaseSensitive(location_areaJSON, "geographicAreas");
     if (geographic_areas) {
-    cJSON *geographic_areas_local_nonprimitive;
-    if (!cJSON_IsArray(geographic_areas)){
-        ogs_error("OpenAPI_location_area_parseFromJSON() failed [geographic_areas]");
-        goto end;
-    }
-
-    geographic_areasList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(geographic_areas_local_nonprimitive, geographic_areas ) {
-        if (!cJSON_IsObject(geographic_areas_local_nonprimitive)) {
+        cJSON *geographic_areas_local_nonprimitive;
+        if (!cJSON_IsArray(geographic_areas)){
             ogs_error("OpenAPI_location_area_parseFromJSON() failed [geographic_areas]");
             goto end;
         }
-        OpenAPI_geographic_area_t *geographic_areasItem = OpenAPI_geographic_area_parseFromJSON(geographic_areas_local_nonprimitive);
 
-        if (!geographic_areasItem) {
-            ogs_error("No geographic_areasItem");
-            OpenAPI_list_free(geographic_areasList);
-            goto end;
+        geographic_areasList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(geographic_areas_local_nonprimitive, geographic_areas ) {
+            if (!cJSON_IsObject(geographic_areas_local_nonprimitive)) {
+                ogs_error("OpenAPI_location_area_parseFromJSON() failed [geographic_areas]");
+                goto end;
+            }
+            OpenAPI_geographic_area_t *geographic_areasItem = OpenAPI_geographic_area_parseFromJSON(geographic_areas_local_nonprimitive);
+
+            if (!geographic_areasItem) {
+                ogs_error("No geographic_areasItem");
+                OpenAPI_list_free(geographic_areasList);
+                goto end;
+            }
+
+            OpenAPI_list_add(geographic_areasList, geographic_areasItem);
         }
-
-        OpenAPI_list_add(geographic_areasList, geographic_areasItem);
-    }
     }
 
-    cJSON *civic_addresses = cJSON_GetObjectItemCaseSensitive(location_areaJSON, "civicAddresses");
-
-    OpenAPI_list_t *civic_addressesList;
+    civic_addresses = cJSON_GetObjectItemCaseSensitive(location_areaJSON, "civicAddresses");
     if (civic_addresses) {
-    cJSON *civic_addresses_local_nonprimitive;
-    if (!cJSON_IsArray(civic_addresses)){
-        ogs_error("OpenAPI_location_area_parseFromJSON() failed [civic_addresses]");
-        goto end;
-    }
-
-    civic_addressesList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(civic_addresses_local_nonprimitive, civic_addresses ) {
-        if (!cJSON_IsObject(civic_addresses_local_nonprimitive)) {
+        cJSON *civic_addresses_local_nonprimitive;
+        if (!cJSON_IsArray(civic_addresses)){
             ogs_error("OpenAPI_location_area_parseFromJSON() failed [civic_addresses]");
             goto end;
         }
-        OpenAPI_civic_address_t *civic_addressesItem = OpenAPI_civic_address_parseFromJSON(civic_addresses_local_nonprimitive);
 
-        if (!civic_addressesItem) {
-            ogs_error("No civic_addressesItem");
-            OpenAPI_list_free(civic_addressesList);
-            goto end;
+        civic_addressesList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(civic_addresses_local_nonprimitive, civic_addresses ) {
+            if (!cJSON_IsObject(civic_addresses_local_nonprimitive)) {
+                ogs_error("OpenAPI_location_area_parseFromJSON() failed [civic_addresses]");
+                goto end;
+            }
+            OpenAPI_civic_address_t *civic_addressesItem = OpenAPI_civic_address_parseFromJSON(civic_addresses_local_nonprimitive);
+
+            if (!civic_addressesItem) {
+                ogs_error("No civic_addressesItem");
+                OpenAPI_list_free(civic_addressesList);
+                goto end;
+            }
+
+            OpenAPI_list_add(civic_addressesList, civic_addressesItem);
         }
-
-        OpenAPI_list_add(civic_addressesList, civic_addressesItem);
-    }
     }
 
-    cJSON *nw_area_info = cJSON_GetObjectItemCaseSensitive(location_areaJSON, "nwAreaInfo");
-
-    OpenAPI_network_area_info_t *nw_area_info_local_nonprim = NULL;
+    nw_area_info = cJSON_GetObjectItemCaseSensitive(location_areaJSON, "nwAreaInfo");
     if (nw_area_info) {
     nw_area_info_local_nonprim = OpenAPI_network_area_info_parseFromJSON(nw_area_info);
     }
@@ -181,6 +191,24 @@ OpenAPI_location_area_t *OpenAPI_location_area_parseFromJSON(cJSON *location_are
 
     return location_area_local_var;
 end:
+    if (geographic_areasList) {
+        OpenAPI_list_for_each(geographic_areasList, node) {
+            OpenAPI_geographic_area_free(node->data);
+        }
+        OpenAPI_list_free(geographic_areasList);
+        geographic_areasList = NULL;
+    }
+    if (civic_addressesList) {
+        OpenAPI_list_for_each(civic_addressesList, node) {
+            OpenAPI_civic_address_free(node->data);
+        }
+        OpenAPI_list_free(civic_addressesList);
+        civic_addressesList = NULL;
+    }
+    if (nw_area_info_local_nonprim) {
+        OpenAPI_network_area_info_free(nw_area_info_local_nonprim);
+        nw_area_info_local_nonprim = NULL;
+    }
     return NULL;
 }
 

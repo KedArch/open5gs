@@ -61,34 +61,35 @@ end:
 OpenAPI_uncertainty_ellipse_t *OpenAPI_uncertainty_ellipse_parseFromJSON(cJSON *uncertainty_ellipseJSON)
 {
     OpenAPI_uncertainty_ellipse_t *uncertainty_ellipse_local_var = NULL;
-    cJSON *semi_major = cJSON_GetObjectItemCaseSensitive(uncertainty_ellipseJSON, "semiMajor");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *semi_major = NULL;
+    cJSON *semi_minor = NULL;
+    cJSON *orientation_major = NULL;
+    semi_major = cJSON_GetObjectItemCaseSensitive(uncertainty_ellipseJSON, "semiMajor");
     if (!semi_major) {
         ogs_error("OpenAPI_uncertainty_ellipse_parseFromJSON() failed [semi_major]");
         goto end;
     }
-
     if (!cJSON_IsNumber(semi_major)) {
         ogs_error("OpenAPI_uncertainty_ellipse_parseFromJSON() failed [semi_major]");
         goto end;
     }
 
-    cJSON *semi_minor = cJSON_GetObjectItemCaseSensitive(uncertainty_ellipseJSON, "semiMinor");
+    semi_minor = cJSON_GetObjectItemCaseSensitive(uncertainty_ellipseJSON, "semiMinor");
     if (!semi_minor) {
         ogs_error("OpenAPI_uncertainty_ellipse_parseFromJSON() failed [semi_minor]");
         goto end;
     }
-
     if (!cJSON_IsNumber(semi_minor)) {
         ogs_error("OpenAPI_uncertainty_ellipse_parseFromJSON() failed [semi_minor]");
         goto end;
     }
 
-    cJSON *orientation_major = cJSON_GetObjectItemCaseSensitive(uncertainty_ellipseJSON, "orientationMajor");
+    orientation_major = cJSON_GetObjectItemCaseSensitive(uncertainty_ellipseJSON, "orientationMajor");
     if (!orientation_major) {
         ogs_error("OpenAPI_uncertainty_ellipse_parseFromJSON() failed [orientation_major]");
         goto end;
     }
-
     if (!cJSON_IsNumber(orientation_major)) {
         ogs_error("OpenAPI_uncertainty_ellipse_parseFromJSON() failed [orientation_major]");
         goto end;

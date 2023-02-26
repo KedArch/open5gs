@@ -38,39 +38,66 @@ void OpenAPI_data_filter_free(OpenAPI_data_filter_t *data_filter)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_data_ind_free(data_filter->data_ind);
-    OpenAPI_list_for_each(data_filter->dnns, node) {
-        ogs_free(node->data);
+    if (data_filter->data_ind) {
+        OpenAPI_data_ind_free(data_filter->data_ind);
+        data_filter->data_ind = NULL;
     }
-    OpenAPI_list_free(data_filter->dnns);
-    OpenAPI_list_for_each(data_filter->snssais, node) {
-        OpenAPI_snssai_free(node->data);
+    if (data_filter->dnns) {
+        OpenAPI_list_for_each(data_filter->dnns, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->dnns);
+        data_filter->dnns = NULL;
     }
-    OpenAPI_list_free(data_filter->snssais);
-    OpenAPI_list_for_each(data_filter->internal_group_ids, node) {
-        ogs_free(node->data);
+    if (data_filter->snssais) {
+        OpenAPI_list_for_each(data_filter->snssais, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->snssais);
+        data_filter->snssais = NULL;
     }
-    OpenAPI_list_free(data_filter->internal_group_ids);
-    OpenAPI_list_for_each(data_filter->supis, node) {
-        ogs_free(node->data);
+    if (data_filter->internal_group_ids) {
+        OpenAPI_list_for_each(data_filter->internal_group_ids, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->internal_group_ids);
+        data_filter->internal_group_ids = NULL;
     }
-    OpenAPI_list_free(data_filter->supis);
-    OpenAPI_list_for_each(data_filter->app_ids, node) {
-        ogs_free(node->data);
+    if (data_filter->supis) {
+        OpenAPI_list_for_each(data_filter->supis, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->supis);
+        data_filter->supis = NULL;
     }
-    OpenAPI_list_free(data_filter->app_ids);
-    OpenAPI_list_for_each(data_filter->ue_ipv4s, node) {
-        ogs_free(node->data);
+    if (data_filter->app_ids) {
+        OpenAPI_list_for_each(data_filter->app_ids, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->app_ids);
+        data_filter->app_ids = NULL;
     }
-    OpenAPI_list_free(data_filter->ue_ipv4s);
-    OpenAPI_list_for_each(data_filter->ue_ipv6s, node) {
-        ogs_free(node->data);
+    if (data_filter->ue_ipv4s) {
+        OpenAPI_list_for_each(data_filter->ue_ipv4s, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->ue_ipv4s);
+        data_filter->ue_ipv4s = NULL;
     }
-    OpenAPI_list_free(data_filter->ue_ipv6s);
-    OpenAPI_list_for_each(data_filter->ue_macs, node) {
-        ogs_free(node->data);
+    if (data_filter->ue_ipv6s) {
+        OpenAPI_list_for_each(data_filter->ue_ipv6s, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->ue_ipv6s);
+        data_filter->ue_ipv6s = NULL;
     }
-    OpenAPI_list_free(data_filter->ue_macs);
+    if (data_filter->ue_macs) {
+        OpenAPI_list_for_each(data_filter->ue_macs, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(data_filter->ue_macs);
+        data_filter->ue_macs = NULL;
+    }
     ogs_free(data_filter);
 }
 
@@ -84,6 +111,10 @@ cJSON *OpenAPI_data_filter_convertToJSON(OpenAPI_data_filter_t *data_filter)
     }
 
     item = cJSON_CreateObject();
+    if (!data_filter->data_ind) {
+        ogs_error("OpenAPI_data_filter_convertToJSON() failed [data_ind]");
+        return NULL;
+    }
     cJSON *data_ind_local_JSON = OpenAPI_data_ind_convertToJSON(data_filter->data_ind);
     if (data_ind_local_JSON == NULL) {
         ogs_error("OpenAPI_data_filter_convertToJSON() failed [data_ind]");
@@ -234,182 +265,183 @@ end:
 OpenAPI_data_filter_t *OpenAPI_data_filter_parseFromJSON(cJSON *data_filterJSON)
 {
     OpenAPI_data_filter_t *data_filter_local_var = NULL;
-    cJSON *data_ind = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "dataInd");
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *data_ind = NULL;
+    OpenAPI_data_ind_t *data_ind_local_nonprim = NULL;
+    cJSON *dnns = NULL;
+    OpenAPI_list_t *dnnsList = NULL;
+    cJSON *snssais = NULL;
+    OpenAPI_list_t *snssaisList = NULL;
+    cJSON *internal_group_ids = NULL;
+    OpenAPI_list_t *internal_group_idsList = NULL;
+    cJSON *supis = NULL;
+    OpenAPI_list_t *supisList = NULL;
+    cJSON *app_ids = NULL;
+    OpenAPI_list_t *app_idsList = NULL;
+    cJSON *ue_ipv4s = NULL;
+    OpenAPI_list_t *ue_ipv4sList = NULL;
+    cJSON *ue_ipv6s = NULL;
+    OpenAPI_list_t *ue_ipv6sList = NULL;
+    cJSON *ue_macs = NULL;
+    OpenAPI_list_t *ue_macsList = NULL;
+    data_ind = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "dataInd");
     if (!data_ind) {
         ogs_error("OpenAPI_data_filter_parseFromJSON() failed [data_ind]");
         goto end;
     }
-
-    OpenAPI_data_ind_t *data_ind_local_nonprim = NULL;
     data_ind_local_nonprim = OpenAPI_data_ind_parseFromJSON(data_ind);
 
-    cJSON *dnns = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "dnns");
-
-    OpenAPI_list_t *dnnsList;
+    dnns = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "dnns");
     if (dnns) {
-    cJSON *dnns_local;
-    if (!cJSON_IsArray(dnns)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [dnns]");
-        goto end;
-    }
-    dnnsList = OpenAPI_list_create();
+        cJSON *dnns_local;
+        if (!cJSON_IsArray(dnns)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [dnns]");
+            goto end;
+        }
+        dnnsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(dnns_local, dnns) {
-    if (!cJSON_IsString(dnns_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [dnns]");
-        goto end;
-    }
-    OpenAPI_list_add(dnnsList, ogs_strdup(dnns_local->valuestring));
-    }
+        cJSON_ArrayForEach(dnns_local, dnns) {
+        if (!cJSON_IsString(dnns_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [dnns]");
+            goto end;
+        }
+        OpenAPI_list_add(dnnsList, ogs_strdup(dnns_local->valuestring));
+        }
     }
 
-    cJSON *snssais = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "snssais");
-
-    OpenAPI_list_t *snssaisList;
+    snssais = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "snssais");
     if (snssais) {
-    cJSON *snssais_local_nonprimitive;
-    if (!cJSON_IsArray(snssais)){
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [snssais]");
-        goto end;
-    }
-
-    snssaisList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(snssais_local_nonprimitive, snssais ) {
-        if (!cJSON_IsObject(snssais_local_nonprimitive)) {
+        cJSON *snssais_local_nonprimitive;
+        if (!cJSON_IsArray(snssais)){
             ogs_error("OpenAPI_data_filter_parseFromJSON() failed [snssais]");
             goto end;
         }
-        OpenAPI_snssai_t *snssaisItem = OpenAPI_snssai_parseFromJSON(snssais_local_nonprimitive);
 
-        if (!snssaisItem) {
-            ogs_error("No snssaisItem");
-            OpenAPI_list_free(snssaisList);
+        snssaisList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(snssais_local_nonprimitive, snssais ) {
+            if (!cJSON_IsObject(snssais_local_nonprimitive)) {
+                ogs_error("OpenAPI_data_filter_parseFromJSON() failed [snssais]");
+                goto end;
+            }
+            OpenAPI_snssai_t *snssaisItem = OpenAPI_snssai_parseFromJSON(snssais_local_nonprimitive);
+
+            if (!snssaisItem) {
+                ogs_error("No snssaisItem");
+                OpenAPI_list_free(snssaisList);
+                goto end;
+            }
+
+            OpenAPI_list_add(snssaisList, snssaisItem);
+        }
+    }
+
+    internal_group_ids = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "internalGroupIds");
+    if (internal_group_ids) {
+        cJSON *internal_group_ids_local;
+        if (!cJSON_IsArray(internal_group_ids)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [internal_group_ids]");
             goto end;
         }
+        internal_group_idsList = OpenAPI_list_create();
 
-        OpenAPI_list_add(snssaisList, snssaisItem);
-    }
-    }
-
-    cJSON *internal_group_ids = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "internalGroupIds");
-
-    OpenAPI_list_t *internal_group_idsList;
-    if (internal_group_ids) {
-    cJSON *internal_group_ids_local;
-    if (!cJSON_IsArray(internal_group_ids)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [internal_group_ids]");
-        goto end;
-    }
-    internal_group_idsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(internal_group_ids_local, internal_group_ids) {
-    if (!cJSON_IsString(internal_group_ids_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [internal_group_ids]");
-        goto end;
-    }
-    OpenAPI_list_add(internal_group_idsList, ogs_strdup(internal_group_ids_local->valuestring));
-    }
+        cJSON_ArrayForEach(internal_group_ids_local, internal_group_ids) {
+        if (!cJSON_IsString(internal_group_ids_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [internal_group_ids]");
+            goto end;
+        }
+        OpenAPI_list_add(internal_group_idsList, ogs_strdup(internal_group_ids_local->valuestring));
+        }
     }
 
-    cJSON *supis = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "supis");
-
-    OpenAPI_list_t *supisList;
+    supis = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "supis");
     if (supis) {
-    cJSON *supis_local;
-    if (!cJSON_IsArray(supis)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [supis]");
-        goto end;
-    }
-    supisList = OpenAPI_list_create();
+        cJSON *supis_local;
+        if (!cJSON_IsArray(supis)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [supis]");
+            goto end;
+        }
+        supisList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(supis_local, supis) {
-    if (!cJSON_IsString(supis_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [supis]");
-        goto end;
-    }
-    OpenAPI_list_add(supisList, ogs_strdup(supis_local->valuestring));
-    }
+        cJSON_ArrayForEach(supis_local, supis) {
+        if (!cJSON_IsString(supis_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [supis]");
+            goto end;
+        }
+        OpenAPI_list_add(supisList, ogs_strdup(supis_local->valuestring));
+        }
     }
 
-    cJSON *app_ids = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "appIds");
-
-    OpenAPI_list_t *app_idsList;
+    app_ids = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "appIds");
     if (app_ids) {
-    cJSON *app_ids_local;
-    if (!cJSON_IsArray(app_ids)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [app_ids]");
-        goto end;
-    }
-    app_idsList = OpenAPI_list_create();
+        cJSON *app_ids_local;
+        if (!cJSON_IsArray(app_ids)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [app_ids]");
+            goto end;
+        }
+        app_idsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(app_ids_local, app_ids) {
-    if (!cJSON_IsString(app_ids_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [app_ids]");
-        goto end;
-    }
-    OpenAPI_list_add(app_idsList, ogs_strdup(app_ids_local->valuestring));
-    }
+        cJSON_ArrayForEach(app_ids_local, app_ids) {
+        if (!cJSON_IsString(app_ids_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [app_ids]");
+            goto end;
+        }
+        OpenAPI_list_add(app_idsList, ogs_strdup(app_ids_local->valuestring));
+        }
     }
 
-    cJSON *ue_ipv4s = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "ueIpv4s");
-
-    OpenAPI_list_t *ue_ipv4sList;
+    ue_ipv4s = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "ueIpv4s");
     if (ue_ipv4s) {
-    cJSON *ue_ipv4s_local;
-    if (!cJSON_IsArray(ue_ipv4s)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv4s]");
-        goto end;
-    }
-    ue_ipv4sList = OpenAPI_list_create();
+        cJSON *ue_ipv4s_local;
+        if (!cJSON_IsArray(ue_ipv4s)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv4s]");
+            goto end;
+        }
+        ue_ipv4sList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ue_ipv4s_local, ue_ipv4s) {
-    if (!cJSON_IsString(ue_ipv4s_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv4s]");
-        goto end;
-    }
-    OpenAPI_list_add(ue_ipv4sList, ogs_strdup(ue_ipv4s_local->valuestring));
-    }
+        cJSON_ArrayForEach(ue_ipv4s_local, ue_ipv4s) {
+        if (!cJSON_IsString(ue_ipv4s_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv4s]");
+            goto end;
+        }
+        OpenAPI_list_add(ue_ipv4sList, ogs_strdup(ue_ipv4s_local->valuestring));
+        }
     }
 
-    cJSON *ue_ipv6s = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "ueIpv6s");
-
-    OpenAPI_list_t *ue_ipv6sList;
+    ue_ipv6s = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "ueIpv6s");
     if (ue_ipv6s) {
-    cJSON *ue_ipv6s_local;
-    if (!cJSON_IsArray(ue_ipv6s)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv6s]");
-        goto end;
-    }
-    ue_ipv6sList = OpenAPI_list_create();
+        cJSON *ue_ipv6s_local;
+        if (!cJSON_IsArray(ue_ipv6s)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv6s]");
+            goto end;
+        }
+        ue_ipv6sList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ue_ipv6s_local, ue_ipv6s) {
-    if (!cJSON_IsString(ue_ipv6s_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv6s]");
-        goto end;
-    }
-    OpenAPI_list_add(ue_ipv6sList, ogs_strdup(ue_ipv6s_local->valuestring));
-    }
+        cJSON_ArrayForEach(ue_ipv6s_local, ue_ipv6s) {
+        if (!cJSON_IsString(ue_ipv6s_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_ipv6s]");
+            goto end;
+        }
+        OpenAPI_list_add(ue_ipv6sList, ogs_strdup(ue_ipv6s_local->valuestring));
+        }
     }
 
-    cJSON *ue_macs = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "ueMacs");
-
-    OpenAPI_list_t *ue_macsList;
+    ue_macs = cJSON_GetObjectItemCaseSensitive(data_filterJSON, "ueMacs");
     if (ue_macs) {
-    cJSON *ue_macs_local;
-    if (!cJSON_IsArray(ue_macs)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_macs]");
-        goto end;
-    }
-    ue_macsList = OpenAPI_list_create();
+        cJSON *ue_macs_local;
+        if (!cJSON_IsArray(ue_macs)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_macs]");
+            goto end;
+        }
+        ue_macsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ue_macs_local, ue_macs) {
-    if (!cJSON_IsString(ue_macs_local)) {
-        ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_macs]");
-        goto end;
-    }
-    OpenAPI_list_add(ue_macsList, ogs_strdup(ue_macs_local->valuestring));
-    }
+        cJSON_ArrayForEach(ue_macs_local, ue_macs) {
+        if (!cJSON_IsString(ue_macs_local)) {
+            ogs_error("OpenAPI_data_filter_parseFromJSON() failed [ue_macs]");
+            goto end;
+        }
+        OpenAPI_list_add(ue_macsList, ogs_strdup(ue_macs_local->valuestring));
+        }
     }
 
     data_filter_local_var = OpenAPI_data_filter_create (
@@ -426,6 +458,66 @@ OpenAPI_data_filter_t *OpenAPI_data_filter_parseFromJSON(cJSON *data_filterJSON)
 
     return data_filter_local_var;
 end:
+    if (data_ind_local_nonprim) {
+        OpenAPI_data_ind_free(data_ind_local_nonprim);
+        data_ind_local_nonprim = NULL;
+    }
+    if (dnnsList) {
+        OpenAPI_list_for_each(dnnsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(dnnsList);
+        dnnsList = NULL;
+    }
+    if (snssaisList) {
+        OpenAPI_list_for_each(snssaisList, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(snssaisList);
+        snssaisList = NULL;
+    }
+    if (internal_group_idsList) {
+        OpenAPI_list_for_each(internal_group_idsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(internal_group_idsList);
+        internal_group_idsList = NULL;
+    }
+    if (supisList) {
+        OpenAPI_list_for_each(supisList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(supisList);
+        supisList = NULL;
+    }
+    if (app_idsList) {
+        OpenAPI_list_for_each(app_idsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(app_idsList);
+        app_idsList = NULL;
+    }
+    if (ue_ipv4sList) {
+        OpenAPI_list_for_each(ue_ipv4sList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ue_ipv4sList);
+        ue_ipv4sList = NULL;
+    }
+    if (ue_ipv6sList) {
+        OpenAPI_list_for_each(ue_ipv6sList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ue_ipv6sList);
+        ue_ipv6sList = NULL;
+    }
+    if (ue_macsList) {
+        OpenAPI_list_for_each(ue_macsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ue_macsList);
+        ue_macsList = NULL;
+    }
     return NULL;
 }
 

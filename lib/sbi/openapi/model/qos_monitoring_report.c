@@ -28,22 +28,34 @@ void OpenAPI_qos_monitoring_report_free(OpenAPI_qos_monitoring_report_t *qos_mon
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(qos_monitoring_report->flows, node) {
-        OpenAPI_flows_free(node->data);
+    if (qos_monitoring_report->flows) {
+        OpenAPI_list_for_each(qos_monitoring_report->flows, node) {
+            OpenAPI_flows_free(node->data);
+        }
+        OpenAPI_list_free(qos_monitoring_report->flows);
+        qos_monitoring_report->flows = NULL;
     }
-    OpenAPI_list_free(qos_monitoring_report->flows);
-    OpenAPI_list_for_each(qos_monitoring_report->ul_delays, node) {
-        ogs_free(node->data);
+    if (qos_monitoring_report->ul_delays) {
+        OpenAPI_list_for_each(qos_monitoring_report->ul_delays, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(qos_monitoring_report->ul_delays);
+        qos_monitoring_report->ul_delays = NULL;
     }
-    OpenAPI_list_free(qos_monitoring_report->ul_delays);
-    OpenAPI_list_for_each(qos_monitoring_report->dl_delays, node) {
-        ogs_free(node->data);
+    if (qos_monitoring_report->dl_delays) {
+        OpenAPI_list_for_each(qos_monitoring_report->dl_delays, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(qos_monitoring_report->dl_delays);
+        qos_monitoring_report->dl_delays = NULL;
     }
-    OpenAPI_list_free(qos_monitoring_report->dl_delays);
-    OpenAPI_list_for_each(qos_monitoring_report->rt_delays, node) {
-        ogs_free(node->data);
+    if (qos_monitoring_report->rt_delays) {
+        OpenAPI_list_for_each(qos_monitoring_report->rt_delays, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(qos_monitoring_report->rt_delays);
+        qos_monitoring_report->rt_delays = NULL;
     }
-    OpenAPI_list_free(qos_monitoring_report->rt_delays);
     ogs_free(qos_monitoring_report);
 }
 
@@ -132,93 +144,112 @@ end:
 OpenAPI_qos_monitoring_report_t *OpenAPI_qos_monitoring_report_parseFromJSON(cJSON *qos_monitoring_reportJSON)
 {
     OpenAPI_qos_monitoring_report_t *qos_monitoring_report_local_var = NULL;
-    cJSON *flows = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "flows");
-
-    OpenAPI_list_t *flowsList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *flows = NULL;
+    OpenAPI_list_t *flowsList = NULL;
+    cJSON *ul_delays = NULL;
+    OpenAPI_list_t *ul_delaysList = NULL;
+    cJSON *dl_delays = NULL;
+    OpenAPI_list_t *dl_delaysList = NULL;
+    cJSON *rt_delays = NULL;
+    OpenAPI_list_t *rt_delaysList = NULL;
+    flows = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "flows");
     if (flows) {
-    cJSON *flows_local_nonprimitive;
-    if (!cJSON_IsArray(flows)){
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [flows]");
-        goto end;
-    }
-
-    flowsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(flows_local_nonprimitive, flows ) {
-        if (!cJSON_IsObject(flows_local_nonprimitive)) {
+        cJSON *flows_local_nonprimitive;
+        if (!cJSON_IsArray(flows)){
             ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [flows]");
             goto end;
         }
-        OpenAPI_flows_t *flowsItem = OpenAPI_flows_parseFromJSON(flows_local_nonprimitive);
 
-        if (!flowsItem) {
-            ogs_error("No flowsItem");
-            OpenAPI_list_free(flowsList);
+        flowsList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(flows_local_nonprimitive, flows ) {
+            if (!cJSON_IsObject(flows_local_nonprimitive)) {
+                ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [flows]");
+                goto end;
+            }
+            OpenAPI_flows_t *flowsItem = OpenAPI_flows_parseFromJSON(flows_local_nonprimitive);
+
+            if (!flowsItem) {
+                ogs_error("No flowsItem");
+                OpenAPI_list_free(flowsList);
+                goto end;
+            }
+
+            OpenAPI_list_add(flowsList, flowsItem);
+        }
+    }
+
+    ul_delays = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "ulDelays");
+    if (ul_delays) {
+        cJSON *ul_delays_local;
+        if (!cJSON_IsArray(ul_delays)) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [ul_delays]");
             goto end;
         }
+        ul_delaysList = OpenAPI_list_create();
 
-        OpenAPI_list_add(flowsList, flowsItem);
-    }
-    }
-
-    cJSON *ul_delays = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "ulDelays");
-
-    OpenAPI_list_t *ul_delaysList;
-    if (ul_delays) {
-    cJSON *ul_delays_local;
-    if (!cJSON_IsArray(ul_delays)) {
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [ul_delays]");
-        goto end;
-    }
-    ul_delaysList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(ul_delays_local, ul_delays) {
-    if (!cJSON_IsNumber(ul_delays_local)) {
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [ul_delays]");
-        goto end;
-    }
-    OpenAPI_list_add(ul_delaysList, &ul_delays_local->valuedouble);
-    }
+        cJSON_ArrayForEach(ul_delays_local, ul_delays) {
+        if (!cJSON_IsNumber(ul_delays_local)) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [ul_delays]");
+            goto end;
+        }
+        double *ul_delays_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!ul_delays_local_value) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [ul_delays]");
+            goto end;
+        }
+        *ul_delays_local_value = ul_delays_local->valuedouble;
+        OpenAPI_list_add(ul_delaysList, ul_delays_local_value);
+        }
     }
 
-    cJSON *dl_delays = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "dlDelays");
-
-    OpenAPI_list_t *dl_delaysList;
+    dl_delays = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "dlDelays");
     if (dl_delays) {
-    cJSON *dl_delays_local;
-    if (!cJSON_IsArray(dl_delays)) {
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [dl_delays]");
-        goto end;
-    }
-    dl_delaysList = OpenAPI_list_create();
+        cJSON *dl_delays_local;
+        if (!cJSON_IsArray(dl_delays)) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [dl_delays]");
+            goto end;
+        }
+        dl_delaysList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(dl_delays_local, dl_delays) {
-    if (!cJSON_IsNumber(dl_delays_local)) {
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [dl_delays]");
-        goto end;
-    }
-    OpenAPI_list_add(dl_delaysList, &dl_delays_local->valuedouble);
-    }
+        cJSON_ArrayForEach(dl_delays_local, dl_delays) {
+        if (!cJSON_IsNumber(dl_delays_local)) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [dl_delays]");
+            goto end;
+        }
+        double *dl_delays_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!dl_delays_local_value) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [dl_delays]");
+            goto end;
+        }
+        *dl_delays_local_value = dl_delays_local->valuedouble;
+        OpenAPI_list_add(dl_delaysList, dl_delays_local_value);
+        }
     }
 
-    cJSON *rt_delays = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "rtDelays");
-
-    OpenAPI_list_t *rt_delaysList;
+    rt_delays = cJSON_GetObjectItemCaseSensitive(qos_monitoring_reportJSON, "rtDelays");
     if (rt_delays) {
-    cJSON *rt_delays_local;
-    if (!cJSON_IsArray(rt_delays)) {
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [rt_delays]");
-        goto end;
-    }
-    rt_delaysList = OpenAPI_list_create();
+        cJSON *rt_delays_local;
+        if (!cJSON_IsArray(rt_delays)) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [rt_delays]");
+            goto end;
+        }
+        rt_delaysList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(rt_delays_local, rt_delays) {
-    if (!cJSON_IsNumber(rt_delays_local)) {
-        ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [rt_delays]");
-        goto end;
-    }
-    OpenAPI_list_add(rt_delaysList, &rt_delays_local->valuedouble);
-    }
+        cJSON_ArrayForEach(rt_delays_local, rt_delays) {
+        if (!cJSON_IsNumber(rt_delays_local)) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [rt_delays]");
+            goto end;
+        }
+        double *rt_delays_local_value = (double *)ogs_calloc(1, sizeof(double));
+        if(!rt_delays_local_value) {
+            ogs_error("OpenAPI_qos_monitoring_report_parseFromJSON() failed [rt_delays]");
+            goto end;
+        }
+        *rt_delays_local_value = rt_delays_local->valuedouble;
+        OpenAPI_list_add(rt_delaysList, rt_delays_local_value);
+        }
     }
 
     qos_monitoring_report_local_var = OpenAPI_qos_monitoring_report_create (
@@ -230,6 +261,34 @@ OpenAPI_qos_monitoring_report_t *OpenAPI_qos_monitoring_report_parseFromJSON(cJS
 
     return qos_monitoring_report_local_var;
 end:
+    if (flowsList) {
+        OpenAPI_list_for_each(flowsList, node) {
+            OpenAPI_flows_free(node->data);
+        }
+        OpenAPI_list_free(flowsList);
+        flowsList = NULL;
+    }
+    if (ul_delaysList) {
+        OpenAPI_list_for_each(ul_delaysList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ul_delaysList);
+        ul_delaysList = NULL;
+    }
+    if (dl_delaysList) {
+        OpenAPI_list_for_each(dl_delaysList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(dl_delaysList);
+        dl_delaysList = NULL;
+    }
+    if (rt_delaysList) {
+        OpenAPI_list_for_each(rt_delaysList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(rt_delaysList);
+        rt_delaysList = NULL;
+    }
     return NULL;
 }
 

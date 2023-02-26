@@ -50,27 +50,63 @@ void OpenAPI_pdu_session_management_data_free(OpenAPI_pdu_session_management_dat
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_pdu_session_status_free(pdu_session_management_data->pdu_session_status);
-    ogs_free(pdu_session_management_data->pdu_session_status_ts);
-    ogs_free(pdu_session_management_data->dnai);
-    ogs_free(pdu_session_management_data->dnai_ts);
-    OpenAPI_list_for_each(pdu_session_management_data->n6_traffic_routing_info, node) {
-        OpenAPI_route_to_location_free(node->data);
+    if (pdu_session_management_data->pdu_session_status) {
+        OpenAPI_pdu_session_status_free(pdu_session_management_data->pdu_session_status);
+        pdu_session_management_data->pdu_session_status = NULL;
     }
-    OpenAPI_list_free(pdu_session_management_data->n6_traffic_routing_info);
-    ogs_free(pdu_session_management_data->n6_traffic_routing_info_ts);
-    ogs_free(pdu_session_management_data->ipv4_addr);
-    OpenAPI_list_for_each(pdu_session_management_data->ipv6_prefix, node) {
-        ogs_free(node->data);
+    if (pdu_session_management_data->pdu_session_status_ts) {
+        ogs_free(pdu_session_management_data->pdu_session_status_ts);
+        pdu_session_management_data->pdu_session_status_ts = NULL;
     }
-    OpenAPI_list_free(pdu_session_management_data->ipv6_prefix);
-    OpenAPI_list_for_each(pdu_session_management_data->ipv6_addrs, node) {
-        ogs_free(node->data);
+    if (pdu_session_management_data->dnai) {
+        ogs_free(pdu_session_management_data->dnai);
+        pdu_session_management_data->dnai = NULL;
     }
-    OpenAPI_list_free(pdu_session_management_data->ipv6_addrs);
-    ogs_free(pdu_session_management_data->ip_addr_ts);
-    ogs_free(pdu_session_management_data->dnn);
-    ogs_free(pdu_session_management_data->supp_feat);
+    if (pdu_session_management_data->dnai_ts) {
+        ogs_free(pdu_session_management_data->dnai_ts);
+        pdu_session_management_data->dnai_ts = NULL;
+    }
+    if (pdu_session_management_data->n6_traffic_routing_info) {
+        OpenAPI_list_for_each(pdu_session_management_data->n6_traffic_routing_info, node) {
+            OpenAPI_route_to_location_free(node->data);
+        }
+        OpenAPI_list_free(pdu_session_management_data->n6_traffic_routing_info);
+        pdu_session_management_data->n6_traffic_routing_info = NULL;
+    }
+    if (pdu_session_management_data->n6_traffic_routing_info_ts) {
+        ogs_free(pdu_session_management_data->n6_traffic_routing_info_ts);
+        pdu_session_management_data->n6_traffic_routing_info_ts = NULL;
+    }
+    if (pdu_session_management_data->ipv4_addr) {
+        ogs_free(pdu_session_management_data->ipv4_addr);
+        pdu_session_management_data->ipv4_addr = NULL;
+    }
+    if (pdu_session_management_data->ipv6_prefix) {
+        OpenAPI_list_for_each(pdu_session_management_data->ipv6_prefix, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(pdu_session_management_data->ipv6_prefix);
+        pdu_session_management_data->ipv6_prefix = NULL;
+    }
+    if (pdu_session_management_data->ipv6_addrs) {
+        OpenAPI_list_for_each(pdu_session_management_data->ipv6_addrs, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(pdu_session_management_data->ipv6_addrs);
+        pdu_session_management_data->ipv6_addrs = NULL;
+    }
+    if (pdu_session_management_data->ip_addr_ts) {
+        ogs_free(pdu_session_management_data->ip_addr_ts);
+        pdu_session_management_data->ip_addr_ts = NULL;
+    }
+    if (pdu_session_management_data->dnn) {
+        ogs_free(pdu_session_management_data->dnn);
+        pdu_session_management_data->dnn = NULL;
+    }
+    if (pdu_session_management_data->supp_feat) {
+        ogs_free(pdu_session_management_data->supp_feat);
+        pdu_session_management_data->supp_feat = NULL;
+    }
     ogs_free(pdu_session_management_data);
 }
 
@@ -184,7 +220,7 @@ cJSON *OpenAPI_pdu_session_management_data_convertToJSON(OpenAPI_pdu_session_man
                     }
     }
 
-    if (pdu_session_management_data->pdu_sess_type) {
+    if (pdu_session_management_data->pdu_sess_type != OpenAPI_pdu_session_type_NULL) {
     if (cJSON_AddStringToObject(item, "pduSessType", OpenAPI_pdu_session_type_ToString(pdu_session_management_data->pdu_sess_type)) == NULL) {
         ogs_error("OpenAPI_pdu_session_management_data_convertToJSON() failed [pdu_sess_type]");
         goto end;
@@ -226,130 +262,135 @@ end:
 OpenAPI_pdu_session_management_data_t *OpenAPI_pdu_session_management_data_parseFromJSON(cJSON *pdu_session_management_dataJSON)
 {
     OpenAPI_pdu_session_management_data_t *pdu_session_management_data_local_var = NULL;
-    cJSON *pdu_session_status = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessionStatus");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *pdu_session_status = NULL;
     OpenAPI_pdu_session_status_t *pdu_session_status_local_nonprim = NULL;
+    cJSON *pdu_session_status_ts = NULL;
+    cJSON *dnai = NULL;
+    cJSON *dnai_ts = NULL;
+    cJSON *n6_traffic_routing_info = NULL;
+    OpenAPI_list_t *n6_traffic_routing_infoList = NULL;
+    cJSON *n6_traffic_routing_info_ts = NULL;
+    cJSON *ipv4_addr = NULL;
+    cJSON *ipv6_prefix = NULL;
+    OpenAPI_list_t *ipv6_prefixList = NULL;
+    cJSON *ipv6_addrs = NULL;
+    OpenAPI_list_t *ipv6_addrsList = NULL;
+    cJSON *pdu_sess_type = NULL;
+    OpenAPI_pdu_session_type_e pdu_sess_typeVariable = 0;
+    cJSON *ip_addr_ts = NULL;
+    cJSON *dnn = NULL;
+    cJSON *pdu_session_id = NULL;
+    cJSON *supp_feat = NULL;
+    pdu_session_status = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessionStatus");
     if (pdu_session_status) {
     pdu_session_status_local_nonprim = OpenAPI_pdu_session_status_parseFromJSON(pdu_session_status);
     }
 
-    cJSON *pdu_session_status_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessionStatusTs");
-
+    pdu_session_status_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessionStatusTs");
     if (pdu_session_status_ts) {
-    if (!cJSON_IsString(pdu_session_status_ts)) {
+    if (!cJSON_IsString(pdu_session_status_ts) && !cJSON_IsNull(pdu_session_status_ts)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [pdu_session_status_ts]");
         goto end;
     }
     }
 
-    cJSON *dnai = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "dnai");
-
+    dnai = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "dnai");
     if (dnai) {
-    if (!cJSON_IsString(dnai)) {
+    if (!cJSON_IsString(dnai) && !cJSON_IsNull(dnai)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [dnai]");
         goto end;
     }
     }
 
-    cJSON *dnai_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "dnaiTs");
-
+    dnai_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "dnaiTs");
     if (dnai_ts) {
-    if (!cJSON_IsString(dnai_ts)) {
+    if (!cJSON_IsString(dnai_ts) && !cJSON_IsNull(dnai_ts)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [dnai_ts]");
         goto end;
     }
     }
 
-    cJSON *n6_traffic_routing_info = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "n6TrafficRoutingInfo");
-
-    OpenAPI_list_t *n6_traffic_routing_infoList;
+    n6_traffic_routing_info = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "n6TrafficRoutingInfo");
     if (n6_traffic_routing_info) {
-    cJSON *n6_traffic_routing_info_local_nonprimitive;
-    if (!cJSON_IsArray(n6_traffic_routing_info)){
-        ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [n6_traffic_routing_info]");
-        goto end;
-    }
-
-    n6_traffic_routing_infoList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(n6_traffic_routing_info_local_nonprimitive, n6_traffic_routing_info ) {
-        if (!cJSON_IsObject(n6_traffic_routing_info_local_nonprimitive)) {
+        cJSON *n6_traffic_routing_info_local_nonprimitive;
+        if (!cJSON_IsArray(n6_traffic_routing_info)){
             ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [n6_traffic_routing_info]");
             goto end;
         }
-        OpenAPI_route_to_location_t *n6_traffic_routing_infoItem = OpenAPI_route_to_location_parseFromJSON(n6_traffic_routing_info_local_nonprimitive);
 
-        if (!n6_traffic_routing_infoItem) {
-            ogs_error("No n6_traffic_routing_infoItem");
-            OpenAPI_list_free(n6_traffic_routing_infoList);
-            goto end;
+        n6_traffic_routing_infoList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(n6_traffic_routing_info_local_nonprimitive, n6_traffic_routing_info ) {
+            if (!cJSON_IsObject(n6_traffic_routing_info_local_nonprimitive)) {
+                ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [n6_traffic_routing_info]");
+                goto end;
+            }
+            OpenAPI_route_to_location_t *n6_traffic_routing_infoItem = OpenAPI_route_to_location_parseFromJSON(n6_traffic_routing_info_local_nonprimitive);
+
+            if (!n6_traffic_routing_infoItem) {
+                ogs_error("No n6_traffic_routing_infoItem");
+                OpenAPI_list_free(n6_traffic_routing_infoList);
+                goto end;
+            }
+
+            OpenAPI_list_add(n6_traffic_routing_infoList, n6_traffic_routing_infoItem);
         }
-
-        OpenAPI_list_add(n6_traffic_routing_infoList, n6_traffic_routing_infoItem);
-    }
     }
 
-    cJSON *n6_traffic_routing_info_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "n6TrafficRoutingInfoTs");
-
+    n6_traffic_routing_info_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "n6TrafficRoutingInfoTs");
     if (n6_traffic_routing_info_ts) {
-    if (!cJSON_IsString(n6_traffic_routing_info_ts)) {
+    if (!cJSON_IsString(n6_traffic_routing_info_ts) && !cJSON_IsNull(n6_traffic_routing_info_ts)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [n6_traffic_routing_info_ts]");
         goto end;
     }
     }
 
-    cJSON *ipv4_addr = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipv4Addr");
-
+    ipv4_addr = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipv4Addr");
     if (ipv4_addr) {
-    if (!cJSON_IsString(ipv4_addr)) {
+    if (!cJSON_IsString(ipv4_addr) && !cJSON_IsNull(ipv4_addr)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv4_addr]");
         goto end;
     }
     }
 
-    cJSON *ipv6_prefix = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipv6Prefix");
-
-    OpenAPI_list_t *ipv6_prefixList;
+    ipv6_prefix = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipv6Prefix");
     if (ipv6_prefix) {
-    cJSON *ipv6_prefix_local;
-    if (!cJSON_IsArray(ipv6_prefix)) {
-        ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_prefix]");
-        goto end;
-    }
-    ipv6_prefixList = OpenAPI_list_create();
+        cJSON *ipv6_prefix_local;
+        if (!cJSON_IsArray(ipv6_prefix)) {
+            ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_prefix]");
+            goto end;
+        }
+        ipv6_prefixList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ipv6_prefix_local, ipv6_prefix) {
-    if (!cJSON_IsString(ipv6_prefix_local)) {
-        ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_prefix]");
-        goto end;
-    }
-    OpenAPI_list_add(ipv6_prefixList, ogs_strdup(ipv6_prefix_local->valuestring));
-    }
+        cJSON_ArrayForEach(ipv6_prefix_local, ipv6_prefix) {
+        if (!cJSON_IsString(ipv6_prefix_local)) {
+            ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_prefix]");
+            goto end;
+        }
+        OpenAPI_list_add(ipv6_prefixList, ogs_strdup(ipv6_prefix_local->valuestring));
+        }
     }
 
-    cJSON *ipv6_addrs = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipv6Addrs");
-
-    OpenAPI_list_t *ipv6_addrsList;
+    ipv6_addrs = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipv6Addrs");
     if (ipv6_addrs) {
-    cJSON *ipv6_addrs_local;
-    if (!cJSON_IsArray(ipv6_addrs)) {
-        ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_addrs]");
-        goto end;
-    }
-    ipv6_addrsList = OpenAPI_list_create();
+        cJSON *ipv6_addrs_local;
+        if (!cJSON_IsArray(ipv6_addrs)) {
+            ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_addrs]");
+            goto end;
+        }
+        ipv6_addrsList = OpenAPI_list_create();
 
-    cJSON_ArrayForEach(ipv6_addrs_local, ipv6_addrs) {
-    if (!cJSON_IsString(ipv6_addrs_local)) {
-        ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_addrs]");
-        goto end;
-    }
-    OpenAPI_list_add(ipv6_addrsList, ogs_strdup(ipv6_addrs_local->valuestring));
-    }
+        cJSON_ArrayForEach(ipv6_addrs_local, ipv6_addrs) {
+        if (!cJSON_IsString(ipv6_addrs_local)) {
+            ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ipv6_addrs]");
+            goto end;
+        }
+        OpenAPI_list_add(ipv6_addrsList, ogs_strdup(ipv6_addrs_local->valuestring));
+        }
     }
 
-    cJSON *pdu_sess_type = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessType");
-
-    OpenAPI_pdu_session_type_e pdu_sess_typeVariable;
+    pdu_sess_type = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessType");
     if (pdu_sess_type) {
     if (!cJSON_IsString(pdu_sess_type)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [pdu_sess_type]");
@@ -358,26 +399,23 @@ OpenAPI_pdu_session_management_data_t *OpenAPI_pdu_session_management_data_parse
     pdu_sess_typeVariable = OpenAPI_pdu_session_type_FromString(pdu_sess_type->valuestring);
     }
 
-    cJSON *ip_addr_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipAddrTs");
-
+    ip_addr_ts = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "ipAddrTs");
     if (ip_addr_ts) {
-    if (!cJSON_IsString(ip_addr_ts)) {
+    if (!cJSON_IsString(ip_addr_ts) && !cJSON_IsNull(ip_addr_ts)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [ip_addr_ts]");
         goto end;
     }
     }
 
-    cJSON *dnn = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "dnn");
-
+    dnn = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "dnn");
     if (dnn) {
-    if (!cJSON_IsString(dnn)) {
+    if (!cJSON_IsString(dnn) && !cJSON_IsNull(dnn)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [dnn]");
         goto end;
     }
     }
 
-    cJSON *pdu_session_id = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessionId");
-
+    pdu_session_id = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "pduSessionId");
     if (pdu_session_id) {
     if (!cJSON_IsNumber(pdu_session_id)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [pdu_session_id]");
@@ -385,10 +423,9 @@ OpenAPI_pdu_session_management_data_t *OpenAPI_pdu_session_management_data_parse
     }
     }
 
-    cJSON *supp_feat = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "suppFeat");
-
+    supp_feat = cJSON_GetObjectItemCaseSensitive(pdu_session_management_dataJSON, "suppFeat");
     if (supp_feat) {
-    if (!cJSON_IsString(supp_feat)) {
+    if (!cJSON_IsString(supp_feat) && !cJSON_IsNull(supp_feat)) {
         ogs_error("OpenAPI_pdu_session_management_data_parseFromJSON() failed [supp_feat]");
         goto end;
     }
@@ -396,24 +433,49 @@ OpenAPI_pdu_session_management_data_t *OpenAPI_pdu_session_management_data_parse
 
     pdu_session_management_data_local_var = OpenAPI_pdu_session_management_data_create (
         pdu_session_status ? pdu_session_status_local_nonprim : NULL,
-        pdu_session_status_ts ? ogs_strdup(pdu_session_status_ts->valuestring) : NULL,
-        dnai ? ogs_strdup(dnai->valuestring) : NULL,
-        dnai_ts ? ogs_strdup(dnai_ts->valuestring) : NULL,
+        pdu_session_status_ts && !cJSON_IsNull(pdu_session_status_ts) ? ogs_strdup(pdu_session_status_ts->valuestring) : NULL,
+        dnai && !cJSON_IsNull(dnai) ? ogs_strdup(dnai->valuestring) : NULL,
+        dnai_ts && !cJSON_IsNull(dnai_ts) ? ogs_strdup(dnai_ts->valuestring) : NULL,
         n6_traffic_routing_info ? n6_traffic_routing_infoList : NULL,
-        n6_traffic_routing_info_ts ? ogs_strdup(n6_traffic_routing_info_ts->valuestring) : NULL,
-        ipv4_addr ? ogs_strdup(ipv4_addr->valuestring) : NULL,
+        n6_traffic_routing_info_ts && !cJSON_IsNull(n6_traffic_routing_info_ts) ? ogs_strdup(n6_traffic_routing_info_ts->valuestring) : NULL,
+        ipv4_addr && !cJSON_IsNull(ipv4_addr) ? ogs_strdup(ipv4_addr->valuestring) : NULL,
         ipv6_prefix ? ipv6_prefixList : NULL,
         ipv6_addrs ? ipv6_addrsList : NULL,
         pdu_sess_type ? pdu_sess_typeVariable : 0,
-        ip_addr_ts ? ogs_strdup(ip_addr_ts->valuestring) : NULL,
-        dnn ? ogs_strdup(dnn->valuestring) : NULL,
+        ip_addr_ts && !cJSON_IsNull(ip_addr_ts) ? ogs_strdup(ip_addr_ts->valuestring) : NULL,
+        dnn && !cJSON_IsNull(dnn) ? ogs_strdup(dnn->valuestring) : NULL,
         pdu_session_id ? true : false,
         pdu_session_id ? pdu_session_id->valuedouble : 0,
-        supp_feat ? ogs_strdup(supp_feat->valuestring) : NULL
+        supp_feat && !cJSON_IsNull(supp_feat) ? ogs_strdup(supp_feat->valuestring) : NULL
     );
 
     return pdu_session_management_data_local_var;
 end:
+    if (pdu_session_status_local_nonprim) {
+        OpenAPI_pdu_session_status_free(pdu_session_status_local_nonprim);
+        pdu_session_status_local_nonprim = NULL;
+    }
+    if (n6_traffic_routing_infoList) {
+        OpenAPI_list_for_each(n6_traffic_routing_infoList, node) {
+            OpenAPI_route_to_location_free(node->data);
+        }
+        OpenAPI_list_free(n6_traffic_routing_infoList);
+        n6_traffic_routing_infoList = NULL;
+    }
+    if (ipv6_prefixList) {
+        OpenAPI_list_for_each(ipv6_prefixList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ipv6_prefixList);
+        ipv6_prefixList = NULL;
+    }
+    if (ipv6_addrsList) {
+        OpenAPI_list_for_each(ipv6_addrsList, node) {
+            ogs_free(node->data);
+        }
+        OpenAPI_list_free(ipv6_addrsList);
+        ipv6_addrsList = NULL;
+    }
     return NULL;
 }
 

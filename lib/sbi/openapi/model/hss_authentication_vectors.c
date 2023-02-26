@@ -40,6 +40,7 @@ end:
 OpenAPI_hss_authentication_vectors_t *OpenAPI_hss_authentication_vectors_parseFromJSON(cJSON *hss_authentication_vectorsJSON)
 {
     OpenAPI_hss_authentication_vectors_t *hss_authentication_vectors_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     hss_authentication_vectors_local_var = OpenAPI_hss_authentication_vectors_create (
     );
 

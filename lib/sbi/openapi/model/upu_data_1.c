@@ -26,12 +26,21 @@ void OpenAPI_upu_data_1_free(OpenAPI_upu_data_1_t *upu_data_1)
         return;
     }
     OpenAPI_lnode_t *node;
-    ogs_free(upu_data_1->sec_packet);
-    OpenAPI_list_for_each(upu_data_1->default_conf_nssai, node) {
-        OpenAPI_snssai_free(node->data);
+    if (upu_data_1->sec_packet) {
+        ogs_free(upu_data_1->sec_packet);
+        upu_data_1->sec_packet = NULL;
     }
-    OpenAPI_list_free(upu_data_1->default_conf_nssai);
-    ogs_free(upu_data_1->routing_id);
+    if (upu_data_1->default_conf_nssai) {
+        OpenAPI_list_for_each(upu_data_1->default_conf_nssai, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(upu_data_1->default_conf_nssai);
+        upu_data_1->default_conf_nssai = NULL;
+    }
+    if (upu_data_1->routing_id) {
+        ogs_free(upu_data_1->routing_id);
+        upu_data_1->routing_id = NULL;
+    }
     ogs_free(upu_data_1);
 }
 
@@ -86,61 +95,69 @@ end:
 OpenAPI_upu_data_1_t *OpenAPI_upu_data_1_parseFromJSON(cJSON *upu_data_1JSON)
 {
     OpenAPI_upu_data_1_t *upu_data_1_local_var = NULL;
-    cJSON *sec_packet = cJSON_GetObjectItemCaseSensitive(upu_data_1JSON, "secPacket");
-
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *sec_packet = NULL;
+    cJSON *default_conf_nssai = NULL;
+    OpenAPI_list_t *default_conf_nssaiList = NULL;
+    cJSON *routing_id = NULL;
+    sec_packet = cJSON_GetObjectItemCaseSensitive(upu_data_1JSON, "secPacket");
     if (sec_packet) {
-    if (!cJSON_IsString(sec_packet)) {
+    if (!cJSON_IsString(sec_packet) && !cJSON_IsNull(sec_packet)) {
         ogs_error("OpenAPI_upu_data_1_parseFromJSON() failed [sec_packet]");
         goto end;
     }
     }
 
-    cJSON *default_conf_nssai = cJSON_GetObjectItemCaseSensitive(upu_data_1JSON, "defaultConfNssai");
-
-    OpenAPI_list_t *default_conf_nssaiList;
+    default_conf_nssai = cJSON_GetObjectItemCaseSensitive(upu_data_1JSON, "defaultConfNssai");
     if (default_conf_nssai) {
-    cJSON *default_conf_nssai_local_nonprimitive;
-    if (!cJSON_IsArray(default_conf_nssai)){
-        ogs_error("OpenAPI_upu_data_1_parseFromJSON() failed [default_conf_nssai]");
-        goto end;
-    }
-
-    default_conf_nssaiList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(default_conf_nssai_local_nonprimitive, default_conf_nssai ) {
-        if (!cJSON_IsObject(default_conf_nssai_local_nonprimitive)) {
+        cJSON *default_conf_nssai_local_nonprimitive;
+        if (!cJSON_IsArray(default_conf_nssai)){
             ogs_error("OpenAPI_upu_data_1_parseFromJSON() failed [default_conf_nssai]");
             goto end;
         }
-        OpenAPI_snssai_t *default_conf_nssaiItem = OpenAPI_snssai_parseFromJSON(default_conf_nssai_local_nonprimitive);
 
-        if (!default_conf_nssaiItem) {
-            ogs_error("No default_conf_nssaiItem");
-            OpenAPI_list_free(default_conf_nssaiList);
-            goto end;
+        default_conf_nssaiList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(default_conf_nssai_local_nonprimitive, default_conf_nssai ) {
+            if (!cJSON_IsObject(default_conf_nssai_local_nonprimitive)) {
+                ogs_error("OpenAPI_upu_data_1_parseFromJSON() failed [default_conf_nssai]");
+                goto end;
+            }
+            OpenAPI_snssai_t *default_conf_nssaiItem = OpenAPI_snssai_parseFromJSON(default_conf_nssai_local_nonprimitive);
+
+            if (!default_conf_nssaiItem) {
+                ogs_error("No default_conf_nssaiItem");
+                OpenAPI_list_free(default_conf_nssaiList);
+                goto end;
+            }
+
+            OpenAPI_list_add(default_conf_nssaiList, default_conf_nssaiItem);
         }
-
-        OpenAPI_list_add(default_conf_nssaiList, default_conf_nssaiItem);
-    }
     }
 
-    cJSON *routing_id = cJSON_GetObjectItemCaseSensitive(upu_data_1JSON, "routingId");
-
+    routing_id = cJSON_GetObjectItemCaseSensitive(upu_data_1JSON, "routingId");
     if (routing_id) {
-    if (!cJSON_IsString(routing_id)) {
+    if (!cJSON_IsString(routing_id) && !cJSON_IsNull(routing_id)) {
         ogs_error("OpenAPI_upu_data_1_parseFromJSON() failed [routing_id]");
         goto end;
     }
     }
 
     upu_data_1_local_var = OpenAPI_upu_data_1_create (
-        sec_packet ? ogs_strdup(sec_packet->valuestring) : NULL,
+        sec_packet && !cJSON_IsNull(sec_packet) ? ogs_strdup(sec_packet->valuestring) : NULL,
         default_conf_nssai ? default_conf_nssaiList : NULL,
-        routing_id ? ogs_strdup(routing_id->valuestring) : NULL
+        routing_id && !cJSON_IsNull(routing_id) ? ogs_strdup(routing_id->valuestring) : NULL
     );
 
     return upu_data_1_local_var;
 end:
+    if (default_conf_nssaiList) {
+        OpenAPI_list_for_each(default_conf_nssaiList, node) {
+            OpenAPI_snssai_free(node->data);
+        }
+        OpenAPI_list_free(default_conf_nssaiList);
+        default_conf_nssaiList = NULL;
+    }
     return NULL;
 }
 

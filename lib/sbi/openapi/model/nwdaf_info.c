@@ -28,22 +28,34 @@ void OpenAPI_nwdaf_info_free(OpenAPI_nwdaf_info_t *nwdaf_info)
         return;
     }
     OpenAPI_lnode_t *node;
-    OpenAPI_list_for_each(nwdaf_info->event_ids, node) {
-        OpenAPI_event_id_free(node->data);
+    if (nwdaf_info->event_ids) {
+        OpenAPI_list_for_each(nwdaf_info->event_ids, node) {
+            OpenAPI_event_id_free(node->data);
+        }
+        OpenAPI_list_free(nwdaf_info->event_ids);
+        nwdaf_info->event_ids = NULL;
     }
-    OpenAPI_list_free(nwdaf_info->event_ids);
-    OpenAPI_list_for_each(nwdaf_info->nwdaf_events, node) {
-        OpenAPI_nwdaf_event_free(node->data);
+    if (nwdaf_info->nwdaf_events) {
+        OpenAPI_list_for_each(nwdaf_info->nwdaf_events, node) {
+            OpenAPI_nwdaf_event_free(node->data);
+        }
+        OpenAPI_list_free(nwdaf_info->nwdaf_events);
+        nwdaf_info->nwdaf_events = NULL;
     }
-    OpenAPI_list_free(nwdaf_info->nwdaf_events);
-    OpenAPI_list_for_each(nwdaf_info->tai_list, node) {
-        OpenAPI_tai_free(node->data);
+    if (nwdaf_info->tai_list) {
+        OpenAPI_list_for_each(nwdaf_info->tai_list, node) {
+            OpenAPI_tai_free(node->data);
+        }
+        OpenAPI_list_free(nwdaf_info->tai_list);
+        nwdaf_info->tai_list = NULL;
     }
-    OpenAPI_list_free(nwdaf_info->tai_list);
-    OpenAPI_list_for_each(nwdaf_info->tai_range_list, node) {
-        OpenAPI_tai_range_free(node->data);
+    if (nwdaf_info->tai_range_list) {
+        OpenAPI_list_for_each(nwdaf_info->tai_range_list, node) {
+            OpenAPI_tai_range_free(node->data);
+        }
+        OpenAPI_list_free(nwdaf_info->tai_range_list);
+        nwdaf_info->tai_range_list = NULL;
     }
-    OpenAPI_list_free(nwdaf_info->tai_range_list);
     ogs_free(nwdaf_info);
 }
 
@@ -144,120 +156,121 @@ end:
 OpenAPI_nwdaf_info_t *OpenAPI_nwdaf_info_parseFromJSON(cJSON *nwdaf_infoJSON)
 {
     OpenAPI_nwdaf_info_t *nwdaf_info_local_var = NULL;
-    cJSON *event_ids = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "eventIds");
-
-    OpenAPI_list_t *event_idsList;
+    OpenAPI_lnode_t *node = NULL;
+    cJSON *event_ids = NULL;
+    OpenAPI_list_t *event_idsList = NULL;
+    cJSON *nwdaf_events = NULL;
+    OpenAPI_list_t *nwdaf_eventsList = NULL;
+    cJSON *tai_list = NULL;
+    OpenAPI_list_t *tai_listList = NULL;
+    cJSON *tai_range_list = NULL;
+    OpenAPI_list_t *tai_range_listList = NULL;
+    event_ids = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "eventIds");
     if (event_ids) {
-    cJSON *event_ids_local_nonprimitive;
-    if (!cJSON_IsArray(event_ids)){
-        ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [event_ids]");
-        goto end;
-    }
-
-    event_idsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(event_ids_local_nonprimitive, event_ids ) {
-        if (!cJSON_IsObject(event_ids_local_nonprimitive)) {
+        cJSON *event_ids_local_nonprimitive;
+        if (!cJSON_IsArray(event_ids)){
             ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [event_ids]");
             goto end;
         }
-        OpenAPI_event_id_t *event_idsItem = OpenAPI_event_id_parseFromJSON(event_ids_local_nonprimitive);
 
-        if (!event_idsItem) {
-            ogs_error("No event_idsItem");
-            OpenAPI_list_free(event_idsList);
-            goto end;
+        event_idsList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(event_ids_local_nonprimitive, event_ids ) {
+            if (!cJSON_IsObject(event_ids_local_nonprimitive)) {
+                ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [event_ids]");
+                goto end;
+            }
+            OpenAPI_event_id_t *event_idsItem = OpenAPI_event_id_parseFromJSON(event_ids_local_nonprimitive);
+
+            if (!event_idsItem) {
+                ogs_error("No event_idsItem");
+                OpenAPI_list_free(event_idsList);
+                goto end;
+            }
+
+            OpenAPI_list_add(event_idsList, event_idsItem);
         }
-
-        OpenAPI_list_add(event_idsList, event_idsItem);
-    }
     }
 
-    cJSON *nwdaf_events = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "nwdafEvents");
-
-    OpenAPI_list_t *nwdaf_eventsList;
+    nwdaf_events = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "nwdafEvents");
     if (nwdaf_events) {
-    cJSON *nwdaf_events_local_nonprimitive;
-    if (!cJSON_IsArray(nwdaf_events)){
-        ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [nwdaf_events]");
-        goto end;
-    }
-
-    nwdaf_eventsList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(nwdaf_events_local_nonprimitive, nwdaf_events ) {
-        if (!cJSON_IsObject(nwdaf_events_local_nonprimitive)) {
+        cJSON *nwdaf_events_local_nonprimitive;
+        if (!cJSON_IsArray(nwdaf_events)){
             ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [nwdaf_events]");
             goto end;
         }
-        OpenAPI_nwdaf_event_t *nwdaf_eventsItem = OpenAPI_nwdaf_event_parseFromJSON(nwdaf_events_local_nonprimitive);
 
-        if (!nwdaf_eventsItem) {
-            ogs_error("No nwdaf_eventsItem");
-            OpenAPI_list_free(nwdaf_eventsList);
-            goto end;
+        nwdaf_eventsList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(nwdaf_events_local_nonprimitive, nwdaf_events ) {
+            if (!cJSON_IsObject(nwdaf_events_local_nonprimitive)) {
+                ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [nwdaf_events]");
+                goto end;
+            }
+            OpenAPI_nwdaf_event_t *nwdaf_eventsItem = OpenAPI_nwdaf_event_parseFromJSON(nwdaf_events_local_nonprimitive);
+
+            if (!nwdaf_eventsItem) {
+                ogs_error("No nwdaf_eventsItem");
+                OpenAPI_list_free(nwdaf_eventsList);
+                goto end;
+            }
+
+            OpenAPI_list_add(nwdaf_eventsList, nwdaf_eventsItem);
         }
-
-        OpenAPI_list_add(nwdaf_eventsList, nwdaf_eventsItem);
-    }
     }
 
-    cJSON *tai_list = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "taiList");
-
-    OpenAPI_list_t *tai_listList;
+    tai_list = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "taiList");
     if (tai_list) {
-    cJSON *tai_list_local_nonprimitive;
-    if (!cJSON_IsArray(tai_list)){
-        ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [tai_list]");
-        goto end;
-    }
-
-    tai_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(tai_list_local_nonprimitive, tai_list ) {
-        if (!cJSON_IsObject(tai_list_local_nonprimitive)) {
+        cJSON *tai_list_local_nonprimitive;
+        if (!cJSON_IsArray(tai_list)){
             ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [tai_list]");
             goto end;
         }
-        OpenAPI_tai_t *tai_listItem = OpenAPI_tai_parseFromJSON(tai_list_local_nonprimitive);
 
-        if (!tai_listItem) {
-            ogs_error("No tai_listItem");
-            OpenAPI_list_free(tai_listList);
-            goto end;
+        tai_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(tai_list_local_nonprimitive, tai_list ) {
+            if (!cJSON_IsObject(tai_list_local_nonprimitive)) {
+                ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [tai_list]");
+                goto end;
+            }
+            OpenAPI_tai_t *tai_listItem = OpenAPI_tai_parseFromJSON(tai_list_local_nonprimitive);
+
+            if (!tai_listItem) {
+                ogs_error("No tai_listItem");
+                OpenAPI_list_free(tai_listList);
+                goto end;
+            }
+
+            OpenAPI_list_add(tai_listList, tai_listItem);
         }
-
-        OpenAPI_list_add(tai_listList, tai_listItem);
-    }
     }
 
-    cJSON *tai_range_list = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "taiRangeList");
-
-    OpenAPI_list_t *tai_range_listList;
+    tai_range_list = cJSON_GetObjectItemCaseSensitive(nwdaf_infoJSON, "taiRangeList");
     if (tai_range_list) {
-    cJSON *tai_range_list_local_nonprimitive;
-    if (!cJSON_IsArray(tai_range_list)){
-        ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [tai_range_list]");
-        goto end;
-    }
-
-    tai_range_listList = OpenAPI_list_create();
-
-    cJSON_ArrayForEach(tai_range_list_local_nonprimitive, tai_range_list ) {
-        if (!cJSON_IsObject(tai_range_list_local_nonprimitive)) {
+        cJSON *tai_range_list_local_nonprimitive;
+        if (!cJSON_IsArray(tai_range_list)){
             ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [tai_range_list]");
             goto end;
         }
-        OpenAPI_tai_range_t *tai_range_listItem = OpenAPI_tai_range_parseFromJSON(tai_range_list_local_nonprimitive);
 
-        if (!tai_range_listItem) {
-            ogs_error("No tai_range_listItem");
-            OpenAPI_list_free(tai_range_listList);
-            goto end;
+        tai_range_listList = OpenAPI_list_create();
+
+        cJSON_ArrayForEach(tai_range_list_local_nonprimitive, tai_range_list ) {
+            if (!cJSON_IsObject(tai_range_list_local_nonprimitive)) {
+                ogs_error("OpenAPI_nwdaf_info_parseFromJSON() failed [tai_range_list]");
+                goto end;
+            }
+            OpenAPI_tai_range_t *tai_range_listItem = OpenAPI_tai_range_parseFromJSON(tai_range_list_local_nonprimitive);
+
+            if (!tai_range_listItem) {
+                ogs_error("No tai_range_listItem");
+                OpenAPI_list_free(tai_range_listList);
+                goto end;
+            }
+
+            OpenAPI_list_add(tai_range_listList, tai_range_listItem);
         }
-
-        OpenAPI_list_add(tai_range_listList, tai_range_listItem);
-    }
     }
 
     nwdaf_info_local_var = OpenAPI_nwdaf_info_create (
@@ -269,6 +282,34 @@ OpenAPI_nwdaf_info_t *OpenAPI_nwdaf_info_parseFromJSON(cJSON *nwdaf_infoJSON)
 
     return nwdaf_info_local_var;
 end:
+    if (event_idsList) {
+        OpenAPI_list_for_each(event_idsList, node) {
+            OpenAPI_event_id_free(node->data);
+        }
+        OpenAPI_list_free(event_idsList);
+        event_idsList = NULL;
+    }
+    if (nwdaf_eventsList) {
+        OpenAPI_list_for_each(nwdaf_eventsList, node) {
+            OpenAPI_nwdaf_event_free(node->data);
+        }
+        OpenAPI_list_free(nwdaf_eventsList);
+        nwdaf_eventsList = NULL;
+    }
+    if (tai_listList) {
+        OpenAPI_list_for_each(tai_listList, node) {
+            OpenAPI_tai_free(node->data);
+        }
+        OpenAPI_list_free(tai_listList);
+        tai_listList = NULL;
+    }
+    if (tai_range_listList) {
+        OpenAPI_list_for_each(tai_range_listList, node) {
+            OpenAPI_tai_range_free(node->data);
+        }
+        OpenAPI_list_free(tai_range_listList);
+        tai_range_listList = NULL;
+    }
     return NULL;
 }
 

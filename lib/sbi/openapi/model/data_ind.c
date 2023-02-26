@@ -40,6 +40,7 @@ end:
 OpenAPI_data_ind_t *OpenAPI_data_ind_parseFromJSON(cJSON *data_indJSON)
 {
     OpenAPI_data_ind_t *data_ind_local_var = NULL;
+    OpenAPI_lnode_t *node = NULL;
     data_ind_local_var = OpenAPI_data_ind_create (
     );
 
