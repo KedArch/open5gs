@@ -2400,10 +2400,12 @@ components:
             - LOCAL_SWITCH
         - type: string
     IMSNodeFunctionality:
-      anyOf:
-        - type: string
-          enum:
+#      anyOf:
+#        - type: string
+#          enum:
 # The applicable IMS Nodes are MRFC, IMS-GWF (connected to S-CSCF using ISC) and SIP AS. 
+          type: string
+          enum:
             - S_CSCF
             - P_CSCF
             - I_CSCF
@@ -2427,7 +2429,7 @@ components:
             - SCEF
             - IWK_SCEF
             - IMS_GWF
-         - type: string
+#         - type: string
     RoleOfIMSNode:
       anyOf:
         - type: string
